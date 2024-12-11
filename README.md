@@ -8,7 +8,6 @@ Dr. Bafflegab's VBAP is an open-source library implementing 2-D Vector Base Ampl
 - *Real-time*: Safe to use in a real-time audio processing context.
 - *Portable*: Written in modern, portable C17 for cross-platform compatibility.
 - *Efficient*: Optimized gain computation for 2D speaker setups.
-- *C++ Bindings*: Optional C++ interface for ease of integration into modern applications.
 
 ## Getting Started
 
@@ -23,12 +22,6 @@ The header file exposes a struct and a few functions:
 - `drb_vbap_2d_size`: Computes the memory size required to construct a 2-D VBAP instance.
 - `drb_vbap_2d_construct`: Constructs a new 2-D VBAP instance.
 - `drb_vbap_2d_compute_gains`: Computes the per-speaker gain for a list of source positions.
-
-To use the library in your code, include the header file and use the API as follows:
-
-1. Use `drb_vbap_2d_size` to determine the memory requirements for the VBAP instance.
-2. Allocate memory and construct the VBAP instance using `drb_vbap_2d_construct`.
-3. Compute speaker gains for a list of sources using `drb_vbap_2d_compute_gains`. This function is safe to call from a real-time audio thread.
 
 See [`example.c`](example.c) for a detailed example.
 

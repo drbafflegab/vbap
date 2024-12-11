@@ -25,7 +25,7 @@ extern int main (int const argc, char const * const argv [const])
 {
     (void)argc, (void)argv; // Suppress unused parameter warnings.
 
-    long const size = drb_vbap_2d_size(resolution, speaker_count);
+    size_t const size = drb_vbap_2d_size(resolution, speaker_count);
 
     void * const memory = malloc(size);
 

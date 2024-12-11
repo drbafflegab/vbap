@@ -12,7 +12,7 @@ static struct
 {
     short major, minor, patch;
 }
-const drb_vbap_version = { 0, 0, 1 };
+const drb_vbap_version = { 0, 0, 2 };
 
 // Opaque structure representing a 2-D VBAP instance.
 typedef struct DrB_VBAP_2D DrB_VBAP_2D;
@@ -66,6 +66,8 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
 // Gains are stored in row-major order; each row corresponds to a source, and
 // each column corresponds to a speaker. The size of `gains` must be at least
 // `source_count * speaker_count`.
+//
+// This function is safe to call from a real-time audio thread.
 //
 // Parameters:
 //

@@ -38,7 +38,7 @@ float const reference_gains [source_count][speaker_count] =
 
 extern void test_sanity (void)
 {
-    long const size = drb_vbap_2d_size(resolution, speaker_count);
+    size_t const size = drb_vbap_2d_size(resolution, speaker_count);
 
     void * const memory = malloc(size);
 
