@@ -12,7 +12,7 @@ static struct
 {
     short major, minor, patch;
 }
-const drb_vbap_version = { 0, 0, 2 };
+const drb_vbap_version = { 0, 0, 3 };
 
 // Opaque structure representing a 2-D VBAP instance.
 typedef struct DrB_VBAP_2D DrB_VBAP_2D;

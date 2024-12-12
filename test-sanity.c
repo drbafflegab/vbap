@@ -12,6 +12,8 @@ static float const pi = 3.1415926535f;
 
 enum { resolution = 8 }; // 10º per division.
 
+enum { source_count = 8 };
+
 static int const speaker_positions [] =
 {
     1, //  45º
@@ -22,9 +24,19 @@ static int const speaker_positions [] =
 
 enum { speaker_count = sizeof(speaker_positions) / sizeof(*speaker_positions) };
 
-enum { source_count = 8 };
+static float const source_angles [source_count] =
+{
+      0.0f * (pi / 180.0f),
+     45.0f * (pi / 180.0f),
+     90.0f * (pi / 180.0f),
+    135.0f * (pi / 180.0f),
+    180.0f * (pi / 180.0f),
+    225.0f * (pi / 180.0f),
+    270.0f * (pi / 180.0f),
+    315.0f * (pi / 180.0f)
+};
 
-float const reference_gains [source_count][speaker_count] =
+static float const reference_gains [source_count][speaker_count] =
 {
     { 0.707107, 0.000000, 0.000000, 0.707107 },
     { 1.000000, 0.000000, 0.000000, 0.000000 },
@@ -53,18 +65,6 @@ extern void test_sanity (void)
     );
 
     assert(vbap != NULL);
-
-    float source_angles [8] =
-    {
-          0.0f * (pi / 180.0f),
-         45.0f * (pi / 180.0f),
-         90.0f * (pi / 180.0f),
-        135.0f * (pi / 180.0f),
-        180.0f * (pi / 180.0f),
-        225.0f * (pi / 180.0f),
-        270.0f * (pi / 180.0f),
-        315.0f * (pi / 180.0f)
-    };
 
     float gains [speaker_count * source_count];
 
