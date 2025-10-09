@@ -99,7 +99,7 @@ extern size_t drb_vbap_2d_size (int const resolution, int const speaker_count)
     size += alignup(sizeof(Bucket) * resolution);
     size += alignup(sizeof(Matrix) * speaker_count);
 
-    return sizeof(DrB_VBAP_2D) + speaker_count * 4 * sizeof(float);
+    return size;
 }
 
 extern DrB_VBAP_2D * drb_vbap_2d_construct
