@@ -44,8 +44,8 @@ To run the tests:
 - [MojoAL](https://github.com/icculus/MojoAL)
 - [Simple DirectMedia Layer](https://www.libsdl.org)
 
-> Know another? [Add yours](#contributing) or [email me](mailto:drbafflegab@protonmail.com).
- 
+Know another? [Email me](mailto:drbafflegab@protonmail.com).
+
 ## Contributing
 
 Contributions are welcome! Feel free to submit issues, feature requests, or pull requests.
