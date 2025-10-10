@@ -39,9 +39,16 @@ To run the tests:
 - Build the test binary using `make tests`.
 - Execute the tests with `./tests`.
 
+## Used by (Alphabetical)
+
+- [MojoAL](https://github.com/icculus/MojoAL)
+- [Simple DirectMedia Layer](https://www.libsdl.org)
+
+> Know another? [Add yours](#contributing) or [email me](mailto:drbafflegab@protonmail.com).
+ 
 ## Contributing
 
-Contributions are welcome! Feel free to submit issues, feature requests, or pull requests to the repository.
+Contributions are welcome! Feel free to submit issues, feature requests, or pull requests.
 
 ## License
 
