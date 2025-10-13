@@ -1,80 +1,42 @@
 #include "drb-vbap.h"
 
-#include <assert.h> // For `assert`.
-#include <stdio.h> // For `printf`.
-#include <stdlib.h> // For `EXIT_SUCCESS`, `NULL`, `malloc`, and `free`.
+#include <stdio.h>
+#include <stdlib.h>
 
-static float const pi = 3.1415926535f;
-
-enum { resolution = 36 }; // 10º per division.
-
-static int const speaker_positions [] =
+int main(void)
 {
-     0, //   0º - front center (FC)
-     3, //  30º - front left   (FL)
-    11, // 110º - back  left   (BL)
-    25, // 250º - back  right  (BR)
-    33  // 330º - front right  (FR)
-};
+    int const resolution = 36; // 10° steps (360° / 36).
+    int const speakers[] = { 0, 3, 11, 25, 33 }; // Indices into the grid.
+    int const speaker_count = sizeof(speakers) / sizeof(speakers[0]);
 
-enum { speaker_count = sizeof(speaker_positions) / sizeof(*speaker_positions) };
+    void * const memory = malloc(drb_vbap_2d_size(resolution, speaker_count));
 
-enum { source_count = 360 };
+    DrB_VBAP_2D_Error error;
 
-extern int main (int const argc, char const * const argv [const])
-{
-    (void)argc, (void)argv; // Suppress unused parameter warnings.
+    DrB_VBAP_2D * const vbap =
+     drb_vbap_2d_construct(memory, resolution, speakers, speaker_count, &error);
 
-    size_t const size = drb_vbap_2d_size(resolution, speaker_count);
-
-    void * const memory = malloc(size);
-
-    assert(memory != NULL);
-
-    DrB_VBAP_2D const * const vbap = drb_vbap_2d_construct
-    (
-        memory,
-        resolution,
-        speaker_positions,
-        speaker_count
-    );
-
-    assert(vbap != NULL);
-
-    float source_angles [source_count];
-
-    for (int source = 0; source < source_count; source++)
+    if (vbap == NULL)
     {
-        source_angles[source] = (float)source * (pi / 180.0f);
+        fprintf(stderr, "VBAP construction failed: error code %d\n", error);
+
+        return EXIT_FAILURE;
     }
 
-    float gains [source_count * speaker_count];
+    float gains [5];
 
-    drb_vbap_2d_compute_gains(vbap, source_angles, source_count, gains);
-
-    printf("angle: fc gain:  fl gain:  bl gain:  br gain:  fr gain:  power:\n");
-
-    for (int source = 0; source < source_count; source++)
+    // Pan a single source around on the unit circle.
+    for (int angle = 0; angle <= 36; angle++)
     {
-        float power = 0.0;
+        float const sources [1] = { (float)angle * 2.0f * 3.14159265 / 36.0f };
 
-        for (int speaker = 0; speaker < speaker_count; speaker++)
-        {
-            float const gain = gains[source * speaker_count + speaker];
+        drb_vbap_2d_compute_gains(vbap, sources, 1, gains);
 
-            power += gain * gain;
-        }
+        printf("%3d° :", angle);
 
-        printf("%5d, ", source);
+        for (int s = 0; s < speaker_count; s++) { printf(" %6.3f", gains[s]); }
 
-        for (int speaker = 0; speaker < speaker_count; speaker++)
-        {
-            float const gain = gains[source * speaker_count + speaker];
-
-            printf("%f, ", gain);
-        }
-
-        printf("%f\n", power);
+        printf("\n");
     }
 
     free(memory);

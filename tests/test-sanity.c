@@ -1,10 +1,12 @@
 #include "drb-vbap.h"
 
-#include <assert.h> // For `assert`.
-#include <stdlib.h> // For `NULL`, `malloc`, and `free`.
-#include <math.h> // For `fabsf`.
-
+#include <assert.h>
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+#define TEST_NAME "Sanity"
 
 static float const epsilon = 1.0e-5f;
 
@@ -48,8 +50,10 @@ static float const reference_gains [source_count][speaker_count] =
     { 0.000000, 0.000000, 0.000000, 1.000000 }
 };
 
-extern void test_sanity (void)
+extern int main (int const argc, char const * const argv [const])
 {
+    (void)argc, (void)argv;
+
     size_t const size = drb_vbap_2d_size(resolution, speaker_count);
 
     void * const memory = malloc(size);
@@ -61,7 +65,8 @@ extern void test_sanity (void)
         memory,
         resolution,
         speaker_positions,
-        speaker_count
+        speaker_count,
+        NULL
     );
 
     assert(vbap != NULL);
@@ -81,4 +86,6 @@ extern void test_sanity (void)
             assert(fabsf(reference_gains[source][speaker] - gain) < epsilon);
         }
     }
+
+    return EXIT_SUCCESS;
 }

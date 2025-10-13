@@ -1,11 +1,21 @@
 #include "drb-vbap.h"
 
-#include <stdalign.h> // For `alignas`.
-#include <stdbool.h> // For `bool`.
-#include <math.h> // For `cosf`, `fabsf`, `lroundf`, and `sinf`.
-#include <string.h> // For `memset`.
+#include <assert.h>
+#include <math.h>
+#include <stdbool.h>
+#include <string.h>
+
+// TODO: Handle denormals.
 
 static float const pi = 3.1415926535f;
+
+// Wraps `angle` in [0; 2 pi].
+static inline float wrap_two_pi (float const angle)
+{
+    float const wrapped = fmodf(angle, 2.0f * pi);
+
+    return wrapped < 0.0f ? wrapped + 2.0f * pi : wrapped;
+}
 
 static inline float division_to_angle (int const division, int const resolution)
 {
@@ -56,7 +66,6 @@ typedef struct Matrix { float a00, a01, a10, a11; } Matrix;
 
 struct DrB_VBAP_2D
 {
-  alignas(cache_line_size)
     int resolution;
     int speaker_count;
     Bucket const * buckets;
@@ -70,7 +79,7 @@ static size_t alignup (size_t const size)
 }
 
 // Allocates aligned memory from a preallocated block.
-static void * alloc (unsigned char * * pointer, size_t const size)
+static void * alloc (unsigned char * * const pointer, size_t const size)
 {
     void * const block = *pointer;
 
@@ -81,16 +90,20 @@ static void * alloc (unsigned char * * pointer, size_t const size)
 
 enum { max_resolution = 3600, max_speaker_count = 64 };
 
-extern size_t drb_vbap_2d_size (int const resolution, int const speaker_count)
+extern size_t drb_vbap_2d_size
+    (
+        int const resolution,
+        int const speaker_count
+    )
 {
-    if (resolution < 0 || resolution > max_resolution)
+    if (resolution < 2 || resolution > max_resolution)
     {
-        return 0;
+        return 1;
     }
 
-    if (speaker_count < 0 || speaker_count > max_speaker_count)
+    if (speaker_count < 2 || speaker_count > max_speaker_count)
     {
-        return 0;
+        return 1;
     }
 
     size_t size = 0;
@@ -107,27 +120,47 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
         void * const memory,
         int const resolution,
         int const speaker_positions [const],
-        int const speaker_count
+        int const speaker_count,
+        DrB_VBAP_2D_Error * const error
     )
 {
-    if (resolution < 0 || resolution >= max_resolution)
+    if (resolution < 2 || resolution >= max_resolution)
     {
+        if (error != NULL)
+        {
+            *error = drb_vbap_2d_error_invalid_resolution;
+        }
+
         return NULL;
     }
 
-    if (speaker_count < 0 || speaker_count >= max_speaker_count)
+    if (speaker_count < 2 || speaker_count >= max_speaker_count)
     {
+        if (error != NULL)
+        {
+            *error = drb_vbap_2d_error_invalid_speaker_count;
+        }
+
         return NULL;
     }
+
+    int previous_position = -1;
 
     for (int speaker_index = 0; speaker_index < speaker_count; speaker_index++)
     {
         int const position = speaker_positions[speaker_index];
 
-        if (position < 0 || position >= resolution)
+        if (position <= previous_position || position >= resolution)
         {
+            if (error != NULL)
+            {
+                *error = drb_vbap_2d_error_invalid_speaker_positions;
+            }
+
             return NULL;
         }
+
+        previous_position = position;
     }
 
     unsigned char * pointer = memory;
@@ -186,24 +219,28 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
 
 extern void drb_vbap_2d_compute_gains
     (
-        DrB_VBAP_2D const * vbap,
-        float const source_angles [],
-        int source_count,
-        float gains []
+        DrB_VBAP_2D const * const vbap,
+        float const source_angles [const restrict],
+        int const source_count,
+        float gains [const restrict]
     )
 {
     memset(gains, 0, source_count * vbap->speaker_count * sizeof(float));
 
     for (int source = 0; source < source_count; source++)
     {
-        float const source_angle = source_angles[source];
+        float const source_angle = wrap_two_pi(source_angles[source]);
 
         float const source_x = cosf(source_angle);
         float const source_y = sinf(source_angle);
 
         int const span = angle_to_span(source_angle, vbap->resolution);
 
+        assert(0 <= span && span < vbap->resolution);
+
         int const speaker_pair = vbap->buckets[span].speaker_pair;
+
+        assert(0 <= speaker_pair && speaker_pair < vbap->speaker_count);
 
         int speakers [2];
 
@@ -217,7 +254,7 @@ extern void drb_vbap_2d_compute_gains
         float const gain_a = source_x * a00 + source_y * a01;
         float const gain_b = source_x * a10 + source_y * a11;
 
-        float const scale = 1.0f / sqrt(gain_a * gain_a + gain_b * gain_b);
+        float const scale = 1.0f / sqrtf(gain_a * gain_a + gain_b * gain_b);
 
         float const gain_a_normalized = gain_a * scale;
         float const gain_b_normalized = gain_b * scale;

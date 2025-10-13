@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} • ${{ matrix.cc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+          - os: ubuntu-latest
+            cc: clang
+          - os: macos-latest
+            cc: clang
+          - os: windows-latest
+            cc: msvc
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Non-Windows (GCC/Clang)
+      - name: Configure (POSIX)
+        if: matrix.cc != 'msvc'
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+
+      - name: Build (POSIX)
+        if: matrix.cc != 'msvc'
+        run: cmake --build build --config RelWithDebInfo -- -j 2
+
+      - name: Test (POSIX)
+        if: matrix.cc != 'msvc'
+        run: ctest --test-dir build --output-on-failure
+
+      # Windows (MSVC)
+      - name: Configure (MSVC)
+        if: matrix.cc == 'msvc'
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build (MSVC)
+        if: matrix.cc == 'msvc'
+        run: cmake --build build --config RelWithDebInfo
+
+      - name: Test (MSVC)
+        if: matrix.cc == 'msvc'
+        run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
