@@ -12,7 +12,7 @@ static float const epsilon = 1.0e-5f;
 
 static float const pi = 3.1415926535f;
 
-enum { resolution = 8 }; // 10º per division.
+enum { resolution = 8 }; // 45º per division.
 
 enum { source_count = 8 };
 
@@ -40,17 +40,17 @@ static float const source_angles [source_count] =
 
 static float const reference_gains [source_count][speaker_count] =
 {
-    { 0.707107, 0.000000, 0.000000, 0.707107 },
-    { 1.000000, 0.000000, 0.000000, 0.000000 },
-    { 0.707107, 0.707107, 0.000000, 0.000000 },
-    { 0.000000, 1.000000, 0.000000, 0.000000 },
-    { 0.000000, 0.707107, 0.707107, 0.000000 },
-    { 0.000000, 0.000000, 1.000000, 0.000000 },
-    { 0.000000, 0.000000, 0.707107, 0.707107 },
-    { 0.000000, 0.000000, 0.000000, 1.000000 }
+    { 0.707107f, 0.000000f, 0.000000f, 0.707107f },
+    { 1.000000f, 0.000000f, 0.000000f, 0.000000f },
+    { 0.707107f, 0.707107f, 0.000000f, 0.000000f },
+    { 0.000000f, 1.000000f, 0.000000f, 0.000000f },
+    { 0.000000f, 0.707107f, 0.707107f, 0.000000f },
+    { 0.000000f, 0.000000f, 1.000000f, 0.000000f },
+    { 0.000000f, 0.000000f, 0.707107f, 0.707107f },
+    { 0.000000f, 0.000000f, 0.000000f, 1.000000f }
 };
 
-extern int main (int const argc, char const * const argv [const])
+extern int main (int const argc, char const * const argv [])
 {
     (void)argc, (void)argv;
 
