@@ -19,11 +19,7 @@ else()
 endif()
 
 # Sanitizers (tests only)
-if (MSVC)
-  # MSVC has AddressSanitizer; UBSan not available.
-  target_compile_options(test_driver PRIVATE /fsanitize=address)
-  target_link_options(test_driver PRIVATE /fsanitize=address)
-else()
+if (NOT MSVC)
   # GCC/Clang (incl. AppleClang)
   target_compile_options(test_driver PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -g)
   target_link_options(test_driver PRIVATE -fsanitize=address,undefined)
