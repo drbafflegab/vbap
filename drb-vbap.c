@@ -52,7 +52,7 @@ static inline void unpack_speaker_pair
     (
         int const speaker_pair,
         int const speaker_count,
-        int speakers [const 2]
+        int speakers [2]
     )
 {
     speakers[0] = (speaker_pair == 0 ? speaker_count : speaker_pair) - 1;
@@ -119,7 +119,7 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
     (
         void * const memory,
         int const resolution,
-        int const speaker_positions [const],
+        int const speaker_positions [],
         int const speaker_count,
         DrB_VBAP_2D_Error * const error
     )
@@ -220,9 +220,9 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
 extern void drb_vbap_2d_compute_gains
     (
         DrB_VBAP_2D const * const vbap,
-        float const source_angles [const restrict],
+        float const source_angles [],
         int const source_count,
-        float gains [const restrict]
+        float gains []
     )
 {
     memset(gains, 0, source_count * vbap->speaker_count * sizeof(float));

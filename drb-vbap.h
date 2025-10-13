@@ -19,17 +19,6 @@ const drb_vbap_version = { 0, 0, 4 };
 // Instances are immutable after successful construction.
 typedef struct DrB_VBAP_2D DrB_VBAP_2D;
 
-// Error code indicating why construction of 2-D VBAP instance failed.
-//
-// Values:
-//
-// - `drb_vbap_error_invalid_resolution`: The `resolution` parameter is zero,
-//   negative, or exceeds the library's supported limits.
-// - `drb_vbap_error_invalid_speaker_count`: The number of speakers is less than
-//   two or exceeds the maximum supported count.
-// - `drb_vbap_error_invalid_speaker_positions`: The `speaker_positions` array
-//   contains out-of-range, duplicate, or unsorted indices.
-
 // Error codes indicating why construction of a 2-D VBAP instance failed.
 //
 // Values:
@@ -38,8 +27,8 @@ typedef struct DrB_VBAP_2D DrB_VBAP_2D;
 //   exceeds the maximum limit of 3600.
 // - `drb_vbap_2d_error_invalid_speaker_count`: The number of speakers is less
 //   than two or exceeds the maximum supported count of 64.
-// - `drb_vbap_2d_error_invalid_speaker_positions`: `speaker_positions` contains
-//   out-of-range values, duplicates, or is not sorted in ascending order.
+// - `drb_vbap_2d_error_invalid_speaker_positions`: The speaker positions con-
+//   tains out-of-range values, duplicates, or is not sorted in ascending order.
 typedef enum
 {
     drb_vbap_2d_error_invalid_resolution,
