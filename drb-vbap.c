@@ -183,7 +183,7 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
             speaker_pair = (speaker_pair + 1) % speaker_count;
         }
 
-        buckets[division].speaker_pair = speaker_pair;
+        buckets[division].speaker_pair = (unsigned char)speaker_pair;
     }
 
     for (int speaker_pair = 0; speaker_pair < speaker_count; speaker_pair++)

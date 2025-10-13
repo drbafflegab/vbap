@@ -1,5 +1,7 @@
 # Dr. Bafflegab's Vector Base Amplitude Panner (VBAP)
 
+[![CI](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml)
+
 Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation of 2‑D **Vector Base Amplitude Panning** (VBAP). It spatializes one or more audio sources across an arbitrary loudspeaker ring by computing per‑speaker gains, and is designed for real-time audio use, such as game engines, embedded DSP, and educational projects.
 
 ## Features

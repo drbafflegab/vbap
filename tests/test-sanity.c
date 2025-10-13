@@ -8,9 +8,9 @@
 
 #define TEST_NAME "Sanity"
 
-static float const epsilon = 1.0e-5f;
+#define PI 3.1415927f
 
-static float const pi = 3.1415926535f;
+static float const epsilon = 1.0e-5f;
 
 enum { resolution = 8 }; // 45º per division.
 
@@ -28,14 +28,14 @@ enum { speaker_count = sizeof(speaker_positions) / sizeof(*speaker_positions) };
 
 static float const source_angles [source_count] =
 {
-      0.0f * (pi / 180.0f),
-     45.0f * (pi / 180.0f),
-     90.0f * (pi / 180.0f),
-    135.0f * (pi / 180.0f),
-    180.0f * (pi / 180.0f),
-    225.0f * (pi / 180.0f),
-    270.0f * (pi / 180.0f),
-    315.0f * (pi / 180.0f)
+      0.0f * (PI / 180.0f),
+     45.0f * (PI / 180.0f),
+     90.0f * (PI / 180.0f),
+    135.0f * (PI / 180.0f),
+    180.0f * (PI / 180.0f),
+    225.0f * (PI / 180.0f),
+    270.0f * (PI / 180.0f),
+    315.0f * (PI / 180.0f)
 };
 
 static float const reference_gains [source_count][speaker_count] =
