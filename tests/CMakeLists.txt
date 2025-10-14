@@ -1,28 +1,41 @@
-# Tests live here
-set(TEST_SOURCES test-sanity.c)
+# tests/CMakeLists.txt
 
-add_executable(test_driver ${TEST_SOURCES})
-set_target_properties(test_driver PROPERTIES C_STANDARD 17 C_STANDARD_REQUIRED YES)
+function(drb_add_test NAME SRC)
+  add_executable(${NAME} ${SRC})
 
-target_link_libraries(test_driver PRIVATE drb_vbap)
+  # C standard
+  set_target_properties(${NAME} PROPERTIES C_STANDARD 17 C_STANDARD_REQUIRED YES)
 
-# Math library where needed
-if (UNIX AND NOT APPLE)
-  target_link_libraries(test_driver PRIVATE m)
-endif()
+  # Link library under test
+  target_link_libraries(${NAME} PRIVATE drb_vbap)
 
-# Warnings on tests too
-if (MSVC)
-  target_compile_options(test_driver PRIVATE /W4 /permissive-)
-else()
-  target_compile_options(test_driver PRIVATE -Wall -Wextra -Wpedantic)
-endif()
+  # libm on Linux
+  if (UNIX AND NOT APPLE)
+    target_link_libraries(${NAME} PRIVATE m)
+  endif()
 
-# Sanitizers (tests only)
-if (NOT MSVC)
-  # GCC/Clang (incl. AppleClang)
-  target_compile_options(test_driver PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -g)
-  target_link_options(test_driver PRIVATE -fsanitize=address,undefined)
-endif()
+  # Warnings
+  if (MSVC)
+    target_compile_options(${NAME} PRIVATE /W4 /permissive-)
+  else()
+    target_compile_options(${NAME} PRIVATE -Wall -Wextra -Wpedantic)
+  endif()
 
-add_test(NAME test_driver COMMAND test_driver)
+  # Sanitizers
+  if (MSVC)
+    # MSVC: Disable.
+  else()
+    # GCC/Clang (incl. AppleClang): ASan + UBSan
+    target_compile_options(${NAME} PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer -g)
+    target_link_options(${NAME} PRIVATE -fsanitize=address,undefined)
+  endif()
+
+  # Register with CTest
+  add_test(NAME ${NAME} COMMAND ${NAME})
+  # set_tests_properties(${NAME} PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+  # set_tests_properties(${NAME} PROPERTIES LABELS "vbap;unit" TIMEOUT 60)
+endfunction()
+
+drb_add_test(fail fail.c)
+drb_add_test(fuzz fuzz.c)
+drb_add_test(sanity sanity.c)

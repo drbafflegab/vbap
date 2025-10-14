@@ -1,12 +1,21 @@
 #include "drb-vbap.h"
 
-#include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define TEST_NAME "Sanity"
+#define ASSERT(condition)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if (!(condition))                                                      \
+        {                                                                      \
+            fprintf(stderr, "[FAILED] line %d\n", __LINE__);                   \
+                                                                               \
+            exit(EXIT_FAILURE);                                                \
+        }                                                                      \
+    }                                                                          \
+    while (0)                                                                  \
 
 #define PI 3.1415927f
 
@@ -50,15 +59,13 @@ static float const reference_gains [source_count][speaker_count] =
     { 0.000000f, 0.000000f, 0.000000f, 1.000000f }
 };
 
-extern int main (int const argc, char const * const argv [])
+extern int main (void)
 {
-    (void)argc, (void)argv;
-
     size_t const size = drb_vbap_2d_size(resolution, speaker_count);
 
     void * const memory = malloc(size);
 
-    assert(memory != NULL);
+    ASSERT(memory != NULL);
 
     DrB_VBAP_2D const * const vbap = drb_vbap_2d_construct
     (
@@ -69,7 +76,7 @@ extern int main (int const argc, char const * const argv [])
         NULL
     );
 
-    assert(vbap != NULL);
+    ASSERT(vbap != NULL);
 
     float gains [speaker_count * source_count];
 
@@ -82,8 +89,9 @@ extern int main (int const argc, char const * const argv [])
         for (int speaker = 0; speaker < speaker_count; speaker++)
         {
             float const gain = gains[source * speaker_count + speaker];
+            float const reference_gain = reference_gains[source][speaker];
 
-            assert(fabsf(reference_gains[source][speaker] - gain) < epsilon);
+            ASSERT(fabsf(reference_gain - gain) < epsilon);
         }
     }
 

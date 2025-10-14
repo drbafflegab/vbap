@@ -1,6 +1,7 @@
 #include "drb-vbap.h"
 
 #include <assert.h>
+#include <float.h>
 #include <math.h>
 #include <stdbool.h>
 #include <string.h>
@@ -8,6 +9,11 @@
 // TODO: Handle denormals.
 
 static float const pi = 3.1415926535f;
+
+static inline float flush_denormals (float const x)
+{
+    return fabsf(x) < FLT_MIN ? 0.0f : x;
+}
 
 // Wraps `angle` in [0; 2 pi].
 static inline float wrap_two_pi (float const angle)
@@ -256,8 +262,8 @@ extern void drb_vbap_2d_compute_gains
 
         float const scale = 1.0f / sqrtf(gain_a * gain_a + gain_b * gain_b);
 
-        float const gain_a_normalized = gain_a * scale;
-        float const gain_b_normalized = gain_b * scale;
+        float const gain_a_normalized = flush_denormals(gain_a * scale);
+        float const gain_b_normalized = flush_denormals(gain_b * scale);
 
         gains[source * vbap->speaker_count + speakers[0]] = gain_a_normalized;
         gains[source * vbap->speaker_count + speakers[1]] = gain_b_normalized;
