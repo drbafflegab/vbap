@@ -33,7 +33,7 @@ static int const speaker_positions [] =
     7  // 315º
 };
 
-enum { speaker_count = sizeof(speaker_positions) / sizeof(*speaker_positions) };
+enum { speaker_count = sizeof(speaker_positions) / sizeof(int) };
 
 static float const source_angles [source_count] =
 {

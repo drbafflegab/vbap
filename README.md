@@ -29,11 +29,11 @@ Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation o
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(void)
+extern int main (void)
 {
-    int const resolution = 36; // 10° steps (360° / 36).
-    int const speakers[] = { 0, 3, 11, 25, 33 }; // Indices into the grid.
-    int const speaker_count = sizeof(speakers) / sizeof(speakers[0]);
+    static int const resolution = 36; // 10° steps.
+    static int const speaker_positions [] = { 0, 3, 11, 25, 33 }; // 0°, 30°, ….
+    static int const speaker_count = sizeof(speakers) / sizeof(speakers[0]);
 
     void * const memory = malloc(drb_vbap_2d_size(resolution, speaker_count));
 
@@ -51,10 +51,10 @@ int main(void)
 
     float gains [5];
 
-    // Pan a single source around on the unit circle.
-    for (int angle = 0; angle <= 36; angle++)
+    // Pan a single source around on the unit circle in 5° steps.
+    for (int angle = 0; angle <= 72; angle++)
     {
-        float const sources [1] = { (float)angle * 2.0f * 3.14159265 / 36.0f };
+        float const sources [1] = { (float)angle * 2.0f * 3.14159265 / 72.0f };
 
         drb_vbap_2d_compute_gains(vbap, sources, 1, gains);
 
