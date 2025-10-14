@@ -32,6 +32,8 @@ jobs:
       - name: Configure (POSIX)
         if: matrix.cc != 'msvc'
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        env:
+          CC: ${{ matrix.cc }}
 
       - name: Build (POSIX)
         if: matrix.cc != 'msvc'
@@ -39,7 +41,7 @@ jobs:
 
       - name: Test (POSIX)
         if: matrix.cc != 'msvc'
-        run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
+        run: ctest --test-dir build --output-on-failure
 
       - name: Configure (MSVC)
         if: matrix.cc == 'msvc'
