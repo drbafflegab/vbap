@@ -34,7 +34,7 @@ static uint32_t xorshift32 (uint32_t * const state)
     return *state = x;
 }
 
-static inline int min (int const a, int const b)
+static inline int minimum (int const a, int const b)
 {
     return a < b ? a : b;
 }
@@ -86,7 +86,7 @@ static int nonzero_count (float const * const gains, int const gain_count)
 static void test_iteration (uint32_t * const state)
 {
     int const resolution = urand_range(state, 16, 3600);
-    int const speaker_count = urand_range(state, 2, min(resolution, 64));
+    int const speaker_count = urand_range(state, 2, minimum(resolution, 64));
     int const source_count = urand_range(state, 1, 16);
     int const gains_count = source_count * speaker_count;
 
