@@ -75,22 +75,20 @@ extern int main (void)
 
 To integrate the library, copy [`drb-vbap.h`](drb-vbap.h) and [`drb-vbap.c`](drb-vbap.c) into your project and compile them with your C17 toolchain. The header file exposes a few functions:
 
-| Function                         | Description                                                                   |
-|:-------------------------------- |:----------------------------------------------------------------------------- |
-| `drb_vbap_2d_size(...)`          | Returns the number of bytes you must provide to construct a VBAP instance.    |
-| `drb_vbap_2d_construct(...)`     | Initializes a VBAP instance in user-provided memory. Returns `NULL` on error. |
-| `drb_vbap_2d_compute_gains(...)` | Computes per-speaker gains for one or more source angles.                     |
+- `drb_vbap_2d_size(…)`: Returns the number of bytes you must provide to construct a VBAP instance.
+- `drb_vbap_2d_construct(…)`: Initializes a VBAP instance in user-provided memory. Returns `NULL` on error.
+- `drb_vbap_2d_compute_gains(…)`: Computes per-speaker gains for one or more source angles.
 
 See [`drb-vbap.h`](./drb-vbap.h) for the full API documentation.
 
 ## Building & Testing
 
-You need a C17‑capable compiler (GCC/Clang/MSVC). No external dependencies.
+You need a [C17](https://en.wikipedia.org/wiki/C17_(C_standard_revision))‑capable compiler (GCC/Clang/MSVC) and [CMake](https://cmake.org). From within your cloned repo:
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -B build
 cmake --build build
-ctest --test-dir build --output-on-failure
+ctest --test-dir build
 ```
 
 ## Used by
