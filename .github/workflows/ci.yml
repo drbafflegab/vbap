@@ -18,39 +18,63 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          # ---------- Linux ----------
+          - os: ubuntu
+            arch: x64
+            runs_on: ubuntu-latest
             cc: gcc
-          - os: ubuntu-latest
+          - os: ubuntu
+            arch: arm64
+            runs_on: ubuntu-24.04-arm
+            cc: gcc
+          # ---------- macOS ----------
+          - os: macos
+            arch: x64
+            runs_on: macos-13
             cc: clang
-          - os: macos-latest
+          - os: macos
+            arch: arm64
+            runs_on: macos-14
             cc: clang
-          - os: windows-latest
+          # ---------- Windows ----------
+          - os: windows
+            arch: x64
+            runs_on: windows-latest
             cc: msvc
+          - os: windows
+            arch: arm64
+            runs_on: windows-11-arm
+            cc: msvc
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure (POSIX)
-        if: matrix.cc != 'msvc'
+        if: matrix.os != 'windows'
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
         env:
           CC: ${{ matrix.cc }}
 
       - name: Build (POSIX)
-        if: matrix.cc != 'msvc'
+        if: matrix.os != 'windows'
         run: cmake --build build --config RelWithDebInfo
 
       - name: Test (POSIX)
-        if: matrix.cc != 'msvc'
+        if: matrix.os != 'windows'
         run: ctest --test-dir build --output-on-failure
 
-      - name: Configure (MSVC)
-        if: matrix.cc == 'msvc'
+      - name: Configure (Windows x64)
+        if: matrix.os == 'windows' && matrix.arch == 'x64'
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
-      - name: Build (MSVC)
-        if: matrix.cc == 'msvc'
+      - name: Configure (Windows ARM64)
+        if: matrix.os == 'windows' && matrix.arch == 'arm64'
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A ARM64
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows'
         run: cmake --build build --config RelWithDebInfo
 
-      - name: Test (MSVC)
-        if: matrix.cc == 'msvc'
+      - name: Test (Windows)
+        if: matrix.os == 'windows'
         run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
