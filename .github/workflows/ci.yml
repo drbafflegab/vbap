@@ -26,32 +26,29 @@ jobs:
             cc: clang
           - os: windows-latest
             cc: msvc
-
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure (POSIX)
-        if: matrix.os != 'windows'
+        if: matrix.cc != 'msvc'
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        env:
-          CC: ${{ matrix.cc }}
 
       - name: Build (POSIX)
-        if: matrix.os != 'windows'
+        if: matrix.cc != 'msvc'
         run: cmake --build build --config RelWithDebInfo
 
       - name: Test (POSIX)
-        if: matrix.os != 'windows'
+        if: matrix.cc != 'msvc'
         run: ctest --test-dir build --output-on-failure
 
-      - name: Configure (MSVC x64)
-        if: matrix.os == 'windows'
+      - name: Configure (MSVC)
+        if: matrix.cc == 'msvc'
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
 
       - name: Build (MSVC)
-        if: matrix.os == 'windows'
+        if: matrix.cc == 'msvc'
         run: cmake --build build --config RelWithDebInfo
 
       - name: Test (MSVC)
-        if: matrix.os == 'windows'
-        run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
+        if: matrix.cc == 'msvc'
+        run: ctest --test-dir build --output-on-failure
