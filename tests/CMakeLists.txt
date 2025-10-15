@@ -1,10 +1,10 @@
 # tests/CMakeLists.txt
 
-function(drb_add_test TARGET SOURCE)
-  add_executable(${TARGET} ${SOURCE})
-  target_link_libraries(${TARGET} PRIVATE vbap)
-  drb_set_target_options(${TARGET})
-  add_test(NAME ${TARGET} COMMAND ${NAME})
+function(drb_add_test NAME SOURCE)
+  add_executable(${NAME} ${SOURCE})
+  target_link_libraries(${NAME} PRIVATE vbap)
+  drb_set_target_options(${NAME})
+  add_test(NAME ${NAME} COMMAND ${NAME})
 endfunction()
 
 drb_add_test(fail fail.c)
