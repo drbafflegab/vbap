@@ -1,21 +1,9 @@
 #include "drb-vbap.h"
 
-#include <math.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "test-utilities.h"
 
-#define ASSERT(condition)                                                      \
-    do                                                                         \
-    {                                                                          \
-        if (!(condition))                                                      \
-        {                                                                      \
-            fprintf(stderr, "[FAILED] line %d\n", __LINE__);                   \
-                                                                               \
-            exit(EXIT_FAILURE);                                                \
-        }                                                                      \
-    }                                                                          \
-    while (0)                                                                  \
+#include <math.h>
+#include <stdlib.h>
 
 #define PI 3.1415927f
 

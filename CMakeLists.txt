@@ -1,28 +1,42 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(drb_vbap
-  VERSION 0.1.0
-  LANGUAGES C
-)
+project(drb_vbap VERSION 0.1.0 LANGUAGES C)
+
+function(drb_set_target_options TARGET)
+  set_target_properties(${TARGET} PROPERTIES
+    C_STANDARD 17
+    C_STANDARD_REQUIRED YES
+  )
+  if (MSVC)
+    target_compile_options(${TARGET} PRIVATE
+      /W4
+      /permissive-
+    )
+  else()
+    target_compile_options(${TARGET} PRIVATE
+      -Wall
+      -Wextra
+      -Wpedantic
+      -fsanitize=address,undefined
+      -fno-sanitize-recover=undefined
+      -fno-omit-frame-pointer
+      -g
+    )
+    target_link_options(${TARGET} PRIVATE
+      -fsanitize=address,undefined
+    )
+  endif()
+endfunction()
 
 # Library
-add_library(drb_vbap STATIC
-  drb-vbap.c
-)
+add_library(vbap STATIC drb-vbap.c)
+target_include_directories(vbap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+drb_set_target_options(vbap)
 
-target_include_directories(drb_vbap PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# C standard
-set_target_properties(drb_vbap PROPERTIES C_STANDARD 17 C_STANDARD_REQUIRED YES)
-
-# Warnings
-if (MSVC)
-  target_compile_options(drb_vbap PRIVATE /W4 /permissive-)
-else()
-  target_compile_options(drb_vbap PRIVATE -Wall -Wextra -Wpedantic)
-endif()
+# Example
+add_executable(example example.c)
+target_link_libraries(example PRIVATE vbap)
+drb_set_target_options(example)
 
 # Tests
 enable_testing()

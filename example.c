@@ -6,7 +6,7 @@
 extern int main (void)
 {
     static int const resolution = 36; // 10° steps.
-    static int const speaker_positions [] = { 0, 3, 11, 25, 33 }; // 0°, 30°, ….
+    static int const speakers [] = { 0, 3, 11, 25, 33 }; // 0°, 30°, 110°, ….
     static int const speaker_count = sizeof(speakers) / sizeof(speakers[0]);
 
     void * const memory = malloc(drb_vbap_2d_size(resolution, speaker_count));

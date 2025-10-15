@@ -1,21 +1,10 @@
 #include "drb-vbap.h"
 
+#include "test-utilities.h"
+
 #include <math.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
-
-#define ASSERT(condition)                                                      \
-    do                                                                         \
-    {                                                                          \
-        if (!(condition))                                                      \
-        {                                                                      \
-            fprintf(stderr, "[FAILED] line %d\n", __LINE__);                   \
-                                                                               \
-            exit(EXIT_FAILURE);                                                \
-        }                                                                      \
-    }                                                                          \
-    while (0)                                                                  \
 
 typedef struct
 {

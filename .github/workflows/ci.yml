@@ -17,8 +17,6 @@ jobs:
         include:
           - os: ubuntu-latest   # gcc
             cc: gcc
-#          - os: ubuntu-latest   # clang
-#            cc: clang
           - os: macos-latest
             cc: clang
           - os: windows-latest  # MSVC (via cl) + Ninja

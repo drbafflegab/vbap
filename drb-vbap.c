@@ -6,7 +6,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-// TODO: Handle denormals.
+#include <limits.h>
+#include <stdlib.h>
 
 static float const pi = 3.1415926535f;
 
@@ -130,6 +131,10 @@ extern DrB_VBAP_2D * drb_vbap_2d_construct
         DrB_VBAP_2D_Error * const error
     )
 {
+    int x = INT_MIN;
+    x -= 5;
+    if (x < 0) { exit(EXIT_FAILURE); }
+
     if (resolution < 2 || resolution >= max_resolution)
     {
         if (error != NULL)
