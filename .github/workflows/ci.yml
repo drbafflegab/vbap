@@ -12,43 +12,32 @@ on:
 
 jobs:
   build:
-    name: ${{ matrix.os }} • ${{ matrix.cc }}
-    runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-latest   # gcc
             cc: gcc
-#          - os: ubuntu-latest
+#          - os: ubuntu-latest   # clang
 #            cc: clang
           - os: macos-latest
             cc: clang
-          - os: windows-latest
-            cc: msvc
+          - os: windows-latest  # MSVC (via cl) + Ninja
+            cc: cl
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure (POSIX)
-        if: matrix.cc != 'msvc'
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - name: Set up MSVC dev cmd
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Build (POSIX)
-        if: matrix.cc != 'msvc'
-        run: cmake --build build --config RelWithDebInfo
+      - name: Configure (all)
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        env:
+          CC: ${{ matrix.cc }}
 
-      - name: Test (POSIX)
-        if: matrix.cc != 'msvc'
+      - name: Build (all)
+        run: cmake --build build
+
+      - name: Test (all)
         run: ctest --test-dir build --output-on-failure
-
-      - name: Configure (MSVC)
-        if: matrix.cc == 'msvc'
-        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-
-      - name: Build (MSVC)
-        if: matrix.cc == 'msvc'
-        run: cmake --build build --config RelWithDebInfo
-
-      - name: Test (MSVC)
-        if: matrix.cc == 'msvc'
-        run: ctest --test-dir build -C RelWithDebInfo --output-on-failure
