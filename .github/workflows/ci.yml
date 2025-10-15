@@ -15,11 +15,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest   # gcc
+          - os: ubuntu-latest
             cc: gcc
           - os: macos-latest
             cc: clang
-          - os: windows-latest  # MSVC (via cl) + Ninja
+          - os: windows-latest
             cc: cl
     runs-on: ${{ matrix.os }}
     steps:

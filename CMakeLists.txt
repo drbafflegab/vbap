@@ -7,6 +7,9 @@ function(drb_set_target_options TARGET)
     C_STANDARD 17
     C_STANDARD_REQUIRED YES
   )
+  if (UNIX AND NOT APPLE)
+    target_link_libraries(${NAME} PRIVATE m) # libm on Linux
+  endif()
   if (MSVC)
     target_compile_options(${TARGET} PRIVATE
       /W4
