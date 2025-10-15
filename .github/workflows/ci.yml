@@ -18,14 +18,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu
-            runs_on: ubuntu-latest
+          - os: ubuntu-latest
             cc: gcc
-          - os: macos
-            runs_on: macos-latest
+#          - os: ubuntu-latest
+#            cc: clang
+          - os: macos-latest
             cc: clang
-          - os: windows
-            runs_on: windows-latest
+          - os: windows-latest
             cc: msvc
 
     steps:
