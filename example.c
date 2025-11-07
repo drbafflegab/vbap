@@ -1,40 +1,57 @@
 #include "drb-vbap.h"
 
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+static const float pi = 3.1415927f;
+
 extern int main (void)
 {
-    static int const resolution = 36; // 10° steps.
-    static int const speakers [] = { 0, 3, 11, 25, 33 }; // 0°, 30°, 110°, ….
-    static int const speaker_count = sizeof(speakers) / sizeof(speakers[0]);
+    enum { source_count = 361 /*37*/, speaker_count = 5 };
 
-    void * const memory = malloc(drb_vbap_2d_size(resolution, speaker_count));
+    float source_positions [source_count * 2];
+    float speaker_gains [source_count * speaker_count];
 
-    DrB_VBAP_2D_Error error;
+    char const * const tag = DRB_VBAP_LAYOUT_TAG_SURROUND_5;
 
-    DrB_VBAP_2D * const vbap =
-     drb_vbap_2d_construct(memory, resolution, speakers, speaker_count, &error);
+    DrB_VBAP_Layout const * const layout = drb_vbap_builtin_layout(tag);
+
+    void * const memory = malloc(drb_vbap_size(layout));
+
+    DrB_VBAP_Error error;
+
+    DrB_VBAP const * const vbap = drb_vbap_construct(memory, layout, &error);
 
     if (vbap == NULL)
     {
-        fprintf(stderr, "VBAP construction failed: error code %d\n", error);
+        fprintf(stderr, "Error: %s.\n", drb_vbap_error_string(error));
 
         return EXIT_FAILURE;
     }
 
-    float gains [5];
-
-    // Pan a single source around on the unit circle in 5° steps.
-    for (int angle = 0; angle <= 72; angle++)
+    for (int_fast32_t source = 0; source < source_count; source++)
     {
-        float const sources [1] = { (float)angle * 2.0f * 3.14159265 / 72.0f };
+        float const theta = (float)source * 2.0f * pi / (float)(source_count-1);
 
-        drb_vbap_2d_compute_gains(vbap, sources, 1, gains);
+        source_positions[source * 2 + 0] = cosf(theta - pi);
+        source_positions[source * 2 + 1] = sinf(theta - pi);
+    }
 
-        printf("%3d° :", angle);
+    drb_vbap_process(vbap, source_positions, speaker_gains, source_count);
 
-        for (int s = 0; s < speaker_count; s++) { printf(" %6.3f", gains[s]); }
+    for (int_fast32_t source = 0; source < source_count; source++)
+    {
+        float const theta = (float)source * 360.0f / (float)(source_count-1);
+
+        printf("%+3.1f", theta - 180.0f);
+
+        for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
+        {
+            int_fast32_t const index = source * speaker_count + speaker;
+
+            printf(", %7.5f", speaker_gains[index]);
+        }
 
         printf("\n");
     }

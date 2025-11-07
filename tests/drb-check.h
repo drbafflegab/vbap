@@ -1,19 +1,19 @@
-#ifndef TEST_UTILITIES_H
-#define TEST_UTILITIES_H
+#ifndef DRB_CHECK_H
+#define DRB_CHECK_H
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ASSERT(condition)                                                      \
+#define CHECK(condition)                                                       \
     do                                                                         \
     {                                                                          \
         if (!(condition))                                                      \
         {                                                                      \
-            fprintf(stderr, "[FAILED] line %d\n", __LINE__);                   \
+            fprintf(stderr, "[FAILED] %s, line %d\n", __FILE__, __LINE__);     \
                                                                                \
-            exit(EXIT_FAILURE);                                                \
+abort();/*exit(EXIT_FAILURE);*/                                                \
         }                                                                      \
     }                                                                          \
     while (0)                                                                  \
 
-#endif // TEST_UTILITIES_H
+#endif // DRB_CHECK_H

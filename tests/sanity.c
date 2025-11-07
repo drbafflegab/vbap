@@ -1,74 +1,65 @@
+#include "drb-check.h"
 #include "drb-vbap.h"
-
-#include "test-utilities.h"
 
 #include <math.h>
 #include <stdlib.h>
 
-#define PI 3.1415927f
-
 static float const epsilon = 1.0e-5f;
 
-enum { resolution = 8 }; // 45º per division.
+enum { speaker_count = 4 };
+
+static DrB_VBAP_Layout const layout =
+{
+    .resolution = 8,
+    .speaker_steps = (int32_t [speaker_count]){ 1, 3, 5, 7 },
+    .count = speaker_count
+};
 
 enum { source_count = 8 };
 
-static int const speaker_positions [] =
+static float const source_positions [source_count * 2] =
 {
-    1, //  45º
-    3, // 135º
-    5, // 225º
-    7  // 315º
-};
-
-enum { speaker_count = sizeof(speaker_positions) / sizeof(int) };
-
-static float const source_angles [source_count] =
-{
-      0.0f * (PI / 180.0f),
-     45.0f * (PI / 180.0f),
-     90.0f * (PI / 180.0f),
-    135.0f * (PI / 180.0f),
-    180.0f * (PI / 180.0f),
-    225.0f * (PI / 180.0f),
-    270.0f * (PI / 180.0f),
-    315.0f * (PI / 180.0f)
+    +1.0000000f,  0.0000000f, // cos   0°, sin   0° (→)
+    +0.7071068f, +0.7071068f, // cos  45°, sin  45° (↗)
+     0.0000000f, +1.0000000f, // cos  90°, sin  90° (↑)
+    -0.7071068f, +0.7071068f, // cos 135°, sin 135° (↖)
+    -1.0000000f,  0.0000000f, // cos 180°, sin 180° (←)
+    -0.7071068f, -0.7071068f, // cos 225°, sin 225° (↙)
+     0.0000000f, -1.0000000f, // cos 270°, sin 270° (↓)
+    +0.7071068f, -0.7071068f  // cos 315°, sin 315° (↘)
 };
 
 static float const reference_gains [source_count][speaker_count] =
 {
-    { 0.707107f, 0.000000f, 0.000000f, 0.707107f },
-    { 1.000000f, 0.000000f, 0.000000f, 0.000000f },
-    { 0.707107f, 0.707107f, 0.000000f, 0.000000f },
-    { 0.000000f, 1.000000f, 0.000000f, 0.000000f },
-    { 0.000000f, 0.707107f, 0.707107f, 0.000000f },
-    { 0.000000f, 0.000000f, 1.000000f, 0.000000f },
-    { 0.000000f, 0.000000f, 0.707107f, 0.707107f },
-    { 0.000000f, 0.000000f, 0.000000f, 1.000000f }
+    { 0.7071068f, 0.0000000f, 0.0000000f, 0.7071068f }, // Between spk. 4 and 1.
+    { 1.0000000f, 0.0000000f, 0.0000000f, 0.0000000f }, // Centered at spk. 1.
+    { 0.7071068f, 0.7071068f, 0.0000000f, 0.0000000f }, // Between spk. 1 and 2.
+    { 0.0000000f, 1.0000000f, 0.0000000f, 0.0000000f }, // Centered at spk. 2.
+    { 0.0000000f, 0.7071068f, 0.7071068f, 0.0000000f }, // Between spk. 2 and 3.
+    { 0.0000000f, 0.0000000f, 1.0000000f, 0.0000000f }, // Centered at spk. 3.
+    { 0.0000000f, 0.0000000f, 0.7071068f, 0.7071068f }, // Between spk. 3 and 4.
+    { 0.0000000f, 0.0000000f, 0.0000000f, 1.0000000f }  // Centered at spk. 4.
 };
 
+#if defined(DRB_USE_TEST_DRIVER)
+extern int drb_vbap_test_sanity (void)
+#else
 extern int main (void)
+#endif
 {
-    size_t const size = drb_vbap_2d_size(resolution, speaker_count);
+    size_t const size = drb_vbap_size(&layout);
 
     void * const memory = malloc(size);
 
-    ASSERT(memory != NULL);
+    CHECK(memory != NULL);
 
-    DrB_VBAP_2D const * const vbap = drb_vbap_2d_construct
-    (
-        memory,
-        resolution,
-        speaker_positions,
-        speaker_count,
-        NULL
-    );
+    DrB_VBAP const * const vbap = drb_vbap_construct(memory, &layout, NULL);
 
-    ASSERT(vbap != NULL);
+    CHECK(vbap != NULL);
 
-    float gains [speaker_count * source_count];
+    float speaker_gains [source_count * speaker_count];
 
-    drb_vbap_2d_compute_gains(vbap, source_angles, source_count, gains);
+    drb_vbap_process(vbap, source_positions, speaker_gains, source_count);
 
     free(memory);
 
@@ -76,10 +67,12 @@ extern int main (void)
     {
         for (int speaker = 0; speaker < speaker_count; speaker++)
         {
-            float const gain = gains[source * speaker_count + speaker];
+            int_fast32_t const index = source * speaker_count + speaker;
+
+            float const estimated_gain = speaker_gains[index];
             float const reference_gain = reference_gains[source][speaker];
 
-            ASSERT(fabsf(reference_gain - gain) < epsilon);
+            CHECK(fabsf(estimated_gain - reference_gain) < epsilon);
         }
     }
 

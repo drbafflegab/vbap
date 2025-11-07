@@ -1,197 +1,126 @@
+#include "drb-check.h"
 #include "drb-vbap.h"
-
-#include "test-utilities.h"
 
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define PI 3.1415927f
-
-static float const epsilon = 1.0e-4f;
-
-static uint32_t xorshift32 (uint32_t * const state)
-{
-    uint32_t x = *state;
-
-    x ^= x << 13;
-    x ^= x >> 17;
-    x ^= x <<  5;
-
-    return *state = x;
-}
-
-static inline int minimum (int const a, int const b)
+static inline int_fast32_t min (int_fast32_t const a, int_fast32_t const b)
 {
     return a < b ? a : b;
 }
 
-static int urand_range (uint32_t * const state, int const low, int const high)
+static uint32_t xorshift32 (void)
 {
-    int const span = high - low + 1;
+    static uint32_t state = UINT32_C(0xC0FFEE);
 
-    return low + (int)(xorshift32(state) % (uint32_t)span);
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+
+    return state;
 }
 
-static float uniform (uint32_t * const state)
+static int_fast32_t range (int_fast32_t const low, int_fast32_t const high)
 {
-    return (float)xorshift32(state) / 4294967295.0f;
+    int_fast32_t const span = high - low + 1;
+
+    return low + (int_fast32_t)(xorshift32() % (uint32_t)span);
 }
 
-static float bin_to_angle (int const bin, int const resolution)
+static float uniform (void)
 {
-    return 2.0f * PI * ((float)bin / (float)resolution);
+    return (float)xorshift32() / (float)UINT32_MAX;
 }
 
-static float power2 (float const * const gains, int const count)
+static void test_iteration (void)
 {
-    double sum = 0.0;
+    int_fast32_t const resolution = range(2, 4096);
+    int_fast32_t const speaker_count = range(2, min(resolution, 16));
+    int_fast32_t const source_count = range(1, 64);
+    int_fast32_t const total_gains_count = source_count * speaker_count;
 
-    for (int index = 0; index < count; index++)
+    int32_t * const speaker_angles = malloc(sizeof(int32_t) * speaker_count);
+
+    CHECK(speaker_angles != NULL);
+
+    DrB_VBAP_Layout const layout =
     {
-        sum += (double)gains[index] * (double)gains[index];
+        .resolution = resolution,
+        .speaker_steps = speaker_angles,
+        .count = speaker_count
+    };
+
+    void * const memory = malloc(drb_vbap_size(&layout));
+    float * const source_positions = malloc(sizeof(float) * 2 * source_count);
+    float * const speaker_gains_0 = malloc(sizeof(float) * total_gains_count);
+    float * const speaker_gains_1 = malloc(sizeof(float) * total_gains_count);
+
+    CHECK(memory != NULL);
+    CHECK(source_positions != NULL);
+    CHECK(speaker_gains_0 != NULL);
+    CHECK(speaker_gains_1 != NULL);
+
+    for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
+    {
+        speaker_angles[speaker] = (speaker * resolution) / speaker_count;
     }
 
-    return (float)sum;
-}
-
-static int nonzero_count (float const * const gains, int const gain_count)
-{
-    int counter = 0;
-
-    for (int index = 0; index < gain_count; index++)
+    for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
     {
-        if (fabsf(gains[index]) > epsilon)
+        int_fast32_t const jitter = range(-1, +1);
+
+        speaker_angles[speaker] += jitter + resolution;
+        speaker_angles[speaker] %= resolution;
+    }
+
+    DrB_VBAP const * const vbap = drb_vbap_construct(memory, &layout, NULL);
+
+    if (vbap != NULL)
+    {
+        for (int_fast32_t source = 0; source < source_count; source++)
         {
-            counter++;
+            source_positions[source * 2 + 0] = uniform() * 20.0f - 10.0f;
+            source_positions[source * 2 + 1] = uniform() * 20.0f - 10.0f;
+        }
+
+        drb_vbap_process(vbap, source_positions, speaker_gains_0, source_count);
+        drb_vbap_process(vbap, source_positions, speaker_gains_1, source_count);
+
+        size_t const size = total_gains_count * sizeof(float);
+
+        CHECK(memcmp(speaker_gains_0, speaker_gains_1, size) == 0);
+
+        for (int_fast32_t source = 0; source < source_count; source++)
+        {
+            for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
+            {
+                int_fast32_t const index = source * speaker_count + speaker;
+
+                CHECK(isfinite(speaker_gains_0[index]));
+            }
         }
     }
 
-    return counter;
-}
-
-static void test_iteration (uint32_t * const state)
-{
-    int const resolution = urand_range(state, 16, 3600);
-    int const speaker_count = urand_range(state, 2, minimum(resolution, 64));
-    int const source_count = urand_range(state, 1, 16);
-    int const gains_count = source_count * speaker_count;
-
-    // Build a valid ring: unique, sorted, roughly uniform.
-
-    int * const speakers = malloc(sizeof(int) * speaker_count);
-    float * const angles = malloc(sizeof(float) * source_count);
-    float * const gains1 = malloc(sizeof(float) * gains_count);
-    float * const gains2 = malloc(sizeof(float) * gains_count);
-    void * const memory = malloc(drb_vbap_2d_size(resolution, speaker_count));
-
-    ASSERT(speakers != NULL);
-    ASSERT(angles != NULL);
-    ASSERT(gains1 != NULL);
-    ASSERT(gains2 != NULL);
-    ASSERT(memory != NULL);
-
-    for (int index = 0; index < speaker_count; index++)
-    {
-        speakers[index] = (index * resolution) / speaker_count;
-    }
-
-    for (int index = 0; index < speaker_count; index++)
-    {
-        int const jitter = urand_range(state, -1, +1);
-
-        speakers[index] = (speakers[index] + jitter + resolution) % resolution;
-    }
-
-    DrB_VBAP_2D * const vbap = drb_vbap_2d_construct
-    (
-        memory,
-        resolution,
-        speakers,
-        speaker_count,
-        NULL
-    );
-
-    if (!vbap)
-    {
-        free(memory);
-        free(gains2);
-        free(gains1);
-        free(angles);
-        free(speakers);
-
-        return;
-    }
-
-    for (int index = 0; index < source_count; index++)
-    {
-        angles[index] = (uniform(state) * 10.0f - 5.0f) * 2.0f * PI;
-    }
-
-    drb_vbap_2d_compute_gains(vbap, angles, source_count, gains1);
-    drb_vbap_2d_compute_gains(vbap, angles, source_count, gains2);
-
-    // Deterministic
-    ASSERT(memcmp(gains1, gains2, sizeof(float) * gains_count) == 0);
-
-    // Finite & bounded; small sparsity
-    for (int index = 0; index < source_count; index++)
-    {
-        float * const row = &gains1[index * speaker_count];
-
-        for (int i = 0; i < speaker_count; ++i)
-        {
-            ASSERT(isfinite(row[i]) && row[i] >= -1.0f && row[i] <= +1.0f);
-        }
-
-        ASSERT(nonzero_count(row, speaker_count) <= 2);
-    }
-
-    // Periodicity (one random source)
-    if (source_count >= 2)
-    {
-        float const shifted_angles [] =
-        {
-            angles[0] + 2.0f * PI,
-            angles[1] - 2.0f * PI
-        };
-
-        drb_vbap_2d_compute_gains(vbap, shifted_angles, 2, gains2);
-
-        for (int index = 0; index < speaker_count * 2; index++)
-        {
-            ASSERT(fabsf(gains2[index] - gains1[index]) < epsilon);
-        }
-    }
-
-    // Exact speaker hit (random one)
-
-    int const pick = urand_range(state, 0, speaker_count-1);
-    float const exact = bin_to_angle(speakers[pick], resolution);
-
-    drb_vbap_2d_compute_gains(vbap, &exact, 1, gains2);
-
-    float const power = power2(gains2, speaker_count);
-
-    ASSERT(1.0f - epsilon < power && power < 1.0f + epsilon);
-
+    free(speaker_gains_1);
+    free(speaker_gains_0);
+    free(source_positions);
     free(memory);
-    free(gains2);
-    free(gains1);
-    free(angles);
-    free(speakers);
+    free(speaker_angles);
 }
 
+#if defined(DRB_USE_TEST_DRIVER)
+extern int drb_vbap_test_fuzz (void)
+#else
 extern int main (void)
+#endif
 {
-    static int const it_count = 10000;
+    enum { it_count = 10000 };
 
-    uint32_t state = 0xC0FFEEu; // Seed.
-
-    for (int it = 0; it < it_count; it++)
+    for (int_fast32_t it = 0; it < it_count; it++)
     {
-        test_iteration(&state);
+        test_iteration();
     }
 
     return EXIT_SUCCESS;
