@@ -13,7 +13,7 @@ Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation o
 - **Minimal, portable C17:** One header + one source; cross-platform; no third-party dependencies; C++ compatible.
 - **Real-time & embed-friendly:** Thread-safe opaque handle; no dynamic allocations; deterministic.
 - **Equal-power panning:** Constant-loudness VBAP panning for arbitrary 2D loudspeaker layouts.
-- **Fast, batched workflow:** One‑time construction; Processes many sources in one go with O(1) work per source.
+- **Fast, batched workflow:** One‑time construction; processes many sources in one go with O(1) work per source.
 - **SIMD-accelerated:** Vectorised path on x86/x86-64 (SSE2) and AArch32/AArch64 (NEON); compile-time selection with automatic scalar fallback; no run-time dispatch.
 - **MIT Licence:** Free for commercial, open-source, and academic use.
 
@@ -31,7 +31,7 @@ Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation o
 To integrate the library, copy [`drb-vbap.h`](drb-vbap.h) and [`drb-vbap.c`](drb-vbap.c) into your project and compile them with your C17 toolchain. The header file exposes a few functions:
 
 - `drb_vbap_2d_size(…)`: Returns the number of bytes you must provide to construct a VBAP instance.
-- `drb_vbap_2d_construct(…)`: Initializes a VBAP instance in user-provided memory. Returns `NULL` on error.
+- `drb_vbap_2d_construct(…)`: Initializes a VBAP instance in user-provided memory.
 - `drb_vbap_2d_compute_gains(…)`: Computes per-speaker gains for one or more source angles.
 
 See [`drb-vbap.h`](drb-vbap.h) for the full API documentation.
@@ -77,8 +77,6 @@ TODO: Write description of what we do in this example.
 4. TODO
 
     ```c
-    static const float two_pi = 6.28318530717958647692f;
-
     for (int_fast32_t source = 0; source < source_count; source++)
     {
         float const theta = (float)source * two_pi / (float)(source_count - 1);
@@ -120,11 +118,11 @@ TODO: Write description of what we do in this example.
     free(memory);
     ```
 
-Graph of the example results:
+Graph of the example output:
 
 ![example graph](graphs/example.svg)
 
-## Building the Tests
+## Building and Running the Tests
 
 You need a [C17](https://en.wikipedia.org/wiki/C17_(C_standard_revision))-capable compiler (GCC/Clang/MSVC) and [CMake](https://cmake.org). From within your cloned repository follow these steps:
 
@@ -148,10 +146,12 @@ You need a [C17](https://en.wikipedia.org/wiki/C17_(C_standard_revision))-capabl
 
 ## SIMD Acceleration
 
-The library includes vectorised implementations for **SSE2** and **NEON**. SIMD selection is done at compile time based on the target architecture. If the target lacks these instruction sets, the code automatically falls back to a scalar path. No runtime dispatch and no extra dependencies.
+The library includes vectorised implementations for the following platforms:
 
-- **x86/x86-64:** On 32-bit x86, enable SSE2 in your compiler flags (e.g., GCC/Clang: `-msse2`; MSVC: `/arch:SSE2`) to use the vectorised path. On 64-bit x86, SSE2 is baseline and enabled by default.
-- **AArch32/AArch64:** On 32-bit ARM, NEON is used when requested in the target flags (e.g., `-mfpu=neon`). On 64-bit ARM, NEON is baseline and enabled by default.
+- **x86/x86-64 (SSE2):** On 32-bit x86, enable SSE2 in your compiler flags (e.g., GCC/Clang: `-msse2`; MSVC: `/arch:SSE2`) to use the vectorised path. On 64-bit x86, SSE2 is baseline and enabled by default.
+- **AArch32/AArch64 (NEON):** On 32-bit ARM, NEON is used when requested in the target flags (e.g., `-mfpu=neon`). On 64-bit ARM, NEON is baseline and enabled by default.
+
+SIMD selection is done at compile time based on the target architecture. If the target lacks these instruction sets, the code automatically falls back to a scalar path. There's no runtime dispatch and no extra dependencies.
 
 ## Used by
 

@@ -128,7 +128,6 @@ DRB_VBAP_API char const * drb_vbap_error_string
 // For example, for a resolution of 8 and the speaker array [1, 3, 5, 7], the
 // speakers will be positioned at the following angles (135°, 225°, 315°, 45°):
 //
-//                 |
 //      spk. 1     |     spk. 4
 //         \       |       /
 //           \     |     /
