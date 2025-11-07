@@ -8,6 +8,8 @@
 
 Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation of 2D **Vector Base Amplitude Panning** (VBAP). It spatializes one or more audio sources across an arbitrary loudspeaker ring by computing per‑speaker gains, and is designed for real-time audio use, such as game engines, embedded DSP, and educational projects.
 
+> This library is for multi-speaker panning only. Need two-speaker panning instead? Try my [stereo panner](https://github.com/drbafflegab/stereo-panner).
+
 ## Features
 
 - **Minimal, portable C17:** One header + one source; cross-platform; no third-party dependencies; C++ compatible.
@@ -16,6 +18,8 @@ Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation o
 - **Fast, batched workflow:** One‑time construction; processes many sources in one go with O(1) work per source.
 - **SIMD-accelerated:** Vectorised path on x86/x86-64 (SSE2) and AArch32/AArch64 (NEON); compile-time selection with automatic scalar fallback; no run-time dispatch.
 - **MIT Licence:** Free for commercial, open-source, and academic use.
+
+> Even though the library is targeted for C17, it doesn't rely on fancy features and can be modified to compile on a C99 compiler with minimal effort.
 
 ## Theory
 
