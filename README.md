@@ -1,5 +1,7 @@
 ![radial graph](graphs/radial.svg)
 
+Radial plot of surround-5 gain factors as a function of source azimuth.
+
 # Dr. Bafflegab's Vector Base Amplitude Panner (VBAP)
 
 [![CI](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml)
@@ -92,12 +94,14 @@ TODO: Write description of what we do in this example.
     drb_vbap_process(vbap, source_positions, speaker_gains, source_count);
     ```
 
+6. TODO
+
     ```c
     for (int_fast32_t source = 0; source < source_count; source++)
     {
-        float const theta = (float)source * 360.0f / (float)(source_count - 1);
+        float const theta = (float)source * 360.0f / (float)(source_count-1);
 
-        printf("%5.1f°", theta);
+        printf("%+4.0f°:", theta - 180.0f);
 
         for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
         {
@@ -110,7 +114,7 @@ TODO: Write description of what we do in this example.
     }
     ```
 
-6. TODO
+7. TODO
 
     ```c
     free(memory);
