@@ -1,6 +1,6 @@
 ![radial graph](graphs/radial.svg)
 
-*Radial plot for the surround-5 layout of per speaker gain (linear) as a function of source azimuth (degrees)*.
+*Polar plot for the surround-5 layout showing per-speaker gain (linear) as a function of source azimuth (degrees)*.
 
 # Dr. Bafflegab's Vector Base Amplitude Panner (VBAP)
 
