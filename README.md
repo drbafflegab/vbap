@@ -1,6 +1,6 @@
 ![radial graph](graphs/radial.svg)
 
-Radial plot of surround-5 gain factors as a function of source azimuth.
+*Radial plot of surround-5 gain factors as a function of source azimuth*.
 
 # Dr. Bafflegab's Vector Base Amplitude Panner (VBAP)
 
