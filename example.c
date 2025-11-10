@@ -52,7 +52,7 @@ extern int main (void)
             int_fast32_t const index = source * speaker_count + speaker;
 
             //printf(" %+5.1f dB", 20.0f * log10f(speaker_gains[index]));
-            printf(", %+5.1f", fmaxf(-100.0f, 20.0f * log10f(speaker_gains[index])));
+            printf(", %+10.5f", fmaxf(-100.0f, 20.0f * log10f(speaker_gains[index])));
         }
 
         printf("\n");
