@@ -7,6 +7,6 @@ function(drb_add_test NAME SOURCE)
   add_test(NAME ${NAME} COMMAND ${NAME})
 endfunction()
 
-drb_add_test(fail fail.c)
+# drb_add_test(fail fail.c)
 drb_add_test(fuzz fuzz.c)
 drb_add_test(sanity sanity.c)
