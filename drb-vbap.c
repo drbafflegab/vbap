@@ -130,31 +130,20 @@ extern char const * drb_vbap_error_string
 {
     switch (error)
     {
-      case drb_vbap_error_null_pointer: return "null pointer";
-      case drb_vbap_error_misaligned_pointer: return "misaligned pointer";
-      case drb_vbap_error_invalid_resolution: return "invalid resolution";
-      case drb_vbap_error_invalid_speaker_steps: return "invalid speaker steps";
-      case drb_vbap_error_invalid_speaker_count: return "invalid speaker count";
+        case drb_vbap_error_null_pointer: return "null pointer";
+        case drb_vbap_error_misaligned_pointer: return "misaligned pointer";
+        case drb_vbap_error_invalid_layout: return "invalid layout";
     }
 
-    return "unknown error";
+    return "unknown";
 }
-
-static DrB_VBAP_Layout const surround_2 [1] =
-{
-    {
-        .resolution = 36,
-        .speaker_steps = (int32_t []){ 3, 33 }, // L/R
-        .count = 2
-    }
-};
 
 static DrB_VBAP_Layout const surround_3 [1] =
 {
     {
         .resolution = 36,
-        .speaker_steps = (int32_t []){ 0, 3, 33 }, // C/L/R
-        .count = 3
+        .speaker_steps = (int32_t []){ 3, 18, 33 },
+        .speaker_count = 3
     }
 };
 
@@ -162,8 +151,8 @@ static DrB_VBAP_Layout const surround_5 [1] =
 {
     {
         .resolution = 36,
-        .speaker_steps = (int32_t []){ 0, 3, 11, 25, 33 }, // FC/FL/BL/BR/FR
-        .count = 5
+        .speaker_steps = (int32_t []){ 0, 3, 11, 25, 33 },
+        .speaker_count = 5
     }
 };
 
@@ -171,8 +160,35 @@ static DrB_VBAP_Layout const surround_7 [1] =
 {
     {
         .resolution = 36,
-        .speaker_steps = (int32_t []){ 0, 3, 11, 15, 21, 25, 33 }, // C/L/Ls/Lb/Rb/Rs/R
-        .count = 7
+        .speaker_steps = (int32_t []){ 0, 3, 11, 15, 21, 25, 33 },
+        .speaker_count = 7
+    }
+};
+
+static DrB_VBAP_Layout const quadrophonic [1] =
+{
+    {
+        .resolution = 8,
+        .speaker_steps = (int32_t []){ 1, 3, 5, 7 },
+        .speaker_count = 4
+    }
+};
+
+static DrB_VBAP_Layout const hexagonal [1] =
+{
+    {
+        .resolution = 6,
+        .speaker_steps = (int32_t []){ 0, 1, 2, 3, 4, 5 },
+        .speaker_count = 6
+    }
+};
+
+static DrB_VBAP_Layout const octophonic [1] =
+{
+    {
+        .resolution = 8,
+        .speaker_steps = (int32_t []){ 0, 1, 2, 3, 4, 5, 6, 7 },
+        .speaker_count = 8
     }
 };
 
@@ -183,10 +199,12 @@ extern DrB_VBAP_Layout const * drb_vbap_builtin_layout
 {
     if (tag == NULL) { return NULL; }
 
-    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_2) == 0) { return surround_2; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_3) == 0) { return surround_3; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_5) == 0) { return surround_5; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_7) == 0) { return surround_7; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_QUADROPHONIC) == 0) { return quadrophonic; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_HEXAGONAL) == 0) { return hexagonal; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_OCTOPHONIC) == 0) { return octophonic; }
 
     return NULL;
 }
@@ -220,7 +238,7 @@ extern size_t drb_vbap_size
         return 0;
     }
 
-    if (2 > layout->count || layout->count > DRB_VBAP_MAX_SPEAKER_COUNT)
+    if (2 > layout->speaker_count || layout->speaker_count > DRB_VBAP_MAX_SPEAKER_COUNT)
     {
         return 0;
     }
@@ -229,7 +247,7 @@ extern size_t drb_vbap_size
 
     size += alignup_size(sizeof(DrB_VBAP));
     size += alignup_size(sizeof(Bucket) * layout->resolution);
-    size += alignup_size(sizeof(Matrix) * layout->count);
+    size += alignup_size(sizeof(Matrix) * layout->speaker_count);
 
     return size;
 }
@@ -243,14 +261,14 @@ extern DrB_VBAP const * drb_vbap_construct
 {
     if (1 > layout->resolution || layout->resolution > DRB_VBAP_MAX_RESOLUTION)
     {
-        if (error != NULL) { *error = drb_vbap_error_invalid_resolution; }
+        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
 
         return NULL;
     }
 
-    if (1 > layout->count || layout->count > DRB_VBAP_MAX_SPEAKER_COUNT)
+    if (1 > layout->speaker_count || layout->speaker_count > DRB_VBAP_MAX_SPEAKER_COUNT)
     {
-        if (error != NULL) { *error = drb_vbap_error_invalid_speaker_count; }
+        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
 
         return NULL;
     }
@@ -271,13 +289,13 @@ extern DrB_VBAP const * drb_vbap_construct
 
     int_fast32_t previous_step = -1;
 
-    for (int_fast32_t speaker = 0; speaker < layout->count; speaker++)
+    for (int_fast32_t speaker = 0; speaker < layout->speaker_count; speaker++)
     {
         int_fast32_t const step = layout->speaker_steps[speaker];
 
         if (step <= previous_step || step >= layout->resolution)
         {
-            if (error != NULL) {*error = drb_vbap_error_invalid_speaker_steps;}
+            if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
 
             return NULL;
         }
@@ -285,24 +303,54 @@ extern DrB_VBAP const * drb_vbap_construct
         previous_step = step;
     }
 
+    for (int_fast32_t pair = 0; pair < layout->speaker_count; pair++)
+    {
+        int32_t base [2];
+
+        unpack_pair(pair, layout->speaker_count, base);
+
+        float const span = fmodf
+        (
+            step_to_angle(layout->speaker_steps[base[1]], layout->resolution)
+          -
+            step_to_angle(layout->speaker_steps[base[0]], layout->resolution)
+          +
+            pi * 2.0f
+          ,
+            pi * 2.0f
+        )
+          *
+            360.0f / (2.0f * pi);
+
+        float const a = step_to_angle(layout->speaker_steps[base[0]], layout->resolution);
+        float const b = step_to_angle(layout->speaker_steps[base[1]], layout->resolution);
+
+        if (span < DRB_VBAP_MIN_SPAN || DRB_VBAP_MAX_SPAN < span)
+        {
+            if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
+
+            return NULL;
+        }
+    }
+
     unsigned char * pointer = alignup_pointer(memory);
 
     DrB_VBAP * const vbap = alloc(&pointer, sizeof(DrB_VBAP));
     Bucket * const buckets = alloc(&pointer, layout->resolution * sizeof(Bucket));
-    Matrix * const matrices = alloc(&pointer, layout->count * sizeof(Matrix));
+    Matrix * const matrices = alloc(&pointer, layout->speaker_count * sizeof(Matrix));
 
     for (int_fast32_t step = 0, pair = 0; step < layout->resolution; step++)
     {
         int32_t base [2];
 
-        unpack_pair(pair, layout->count, base);
+        unpack_pair(pair, layout->speaker_count, base);
 
         int_fast32_t const lower_bound = layout->speaker_steps[base[0]];
         int_fast32_t const upper_bound = layout->speaker_steps[base[1]];
 
         if (!contains(lower_bound, upper_bound, step, layout->resolution))
         {
-            pair = (pair + 1) % layout->count;
+            pair = (pair + 1) % layout->speaker_count;
         }
 
         assert(0 <= pair && pair <= UINT8_MAX);
@@ -310,11 +358,11 @@ extern DrB_VBAP const * drb_vbap_construct
         buckets[step].speaker_pair = (uint8_t)pair;
     }
 
-    for (int_fast32_t pair = 0; pair < layout->count; pair++)
+    for (int_fast32_t pair = 0; pair < layout->speaker_count; pair++)
     {
         int32_t base [2];
 
-        unpack_pair(pair, layout->count, base);
+        unpack_pair(pair, layout->speaker_count, base);
 
         int_fast32_t const fst_speaker_step = layout->speaker_steps[base[0]];
         int_fast32_t const snd_speaker_step = layout->speaker_steps[base[1]];
@@ -334,7 +382,7 @@ extern DrB_VBAP const * drb_vbap_construct
     }
 
     vbap->resolution = layout->resolution;
-    vbap->speaker_count = layout->count;
+    vbap->speaker_count = layout->speaker_count;
     vbap->buckets = buckets;
     vbap->matrices = matrices;
 

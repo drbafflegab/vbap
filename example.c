@@ -8,7 +8,7 @@ static const float pi = 3.1415927f;
 
 extern int main (void)
 {
-    enum { source_count = 37, speaker_count = 5 };
+    enum { source_count = 36 + 1, speaker_count = 5 };
 
     float source_positions [source_count * 2];
     float speaker_gains [source_count * speaker_count];
@@ -44,13 +44,15 @@ extern int main (void)
     {
         float const theta = (float)source * 360.0f / (float)(source_count-1);
 
-        printf("%+4.0f°:", theta - 180.0f);
+        //printf("%+4.0f°:", theta - 180.0f);
+        printf("%+4.0f", theta - 180.0f);
 
         for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
         {
             int_fast32_t const index = source * speaker_count + speaker;
 
-            printf(" %7.5f", speaker_gains[index]);
+            //printf(" %+5.1f dB", 20.0f * log10f(speaker_gains[index]));
+            printf(", %+5.1f", fmaxf(-100.0f, 20.0f * log10f(speaker_gains[index])));
         }
 
         printf("\n");

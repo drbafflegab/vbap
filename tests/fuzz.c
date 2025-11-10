@@ -49,7 +49,7 @@ static void test_iteration (void)
     {
         .resolution = resolution,
         .speaker_steps = speaker_angles,
-        .count = speaker_count
+        .speaker_count = speaker_count
     };
 
     void * const memory = malloc(drb_vbap_size(&layout));

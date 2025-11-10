@@ -12,7 +12,7 @@ static DrB_VBAP_Layout const layout =
 {
     .resolution = 8,
     .speaker_steps = (int32_t [speaker_count]){ 1, 3, 5, 7 },
-    .count = speaker_count
+    .speaker_count = speaker_count
 };
 
 enum { source_count = 8 };

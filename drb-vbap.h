@@ -5,14 +5,9 @@
 #ifndef DRB_VBAP_H
 #define DRB_VBAP_H
 
-#if defined(__cplusplus)
-#  include <cstddef>
-#  include <cstdint>
-#else
-#  include <stdbool.h>
-#  include <stddef.h>
-#  include <stdint.h>
-#endif
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define DRB_VBAP_VERSION_MAJOR 0
 #define DRB_VBAP_VERSION_MINOR 1
@@ -37,16 +32,18 @@ extern "C" {
 //
 // Parameters:
 //
-// - `major`: Optional, nullable pointer to receive the major version.
-// - `minor`: Optional, nullable pointer to receive the minor version.
-// - `patch`: Optional, nullable pointer to receive the patch version.
+// - `major`: Optional pointer to receive the major version.
+// - `minor`: Optional pointer to receive the minor version.
+// - `patch`: Optional pointer to receive the patch version.
 //
 // For each parameter, the corresponding version component is written only if
-// the pointer is non-null. Null pointers are ignored and left untouched.
+// the pointer is non-null. Null pointers are ignored.
 //
-// Assumed preconditions (not validated; violation causes undefined behaviour):
+// Assumed preconditions (not checked; violation causes undefined behaviour):
 //
 // - `major`, `minor`, and `patch` are distinct pointers.
+//
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API void drb_vbap_version
     (
@@ -65,17 +62,13 @@ typedef int32_t DrB_VBAP_Error;
 //
 // - `drb_vbap_error_null_pointer`: A required pointer is null.
 // - `drb_vbap_error_misaligned_pointer`: A provided pointer is misaligned.
-// - `drb_vbap_error_invalid_resolution`: The resolution is out of bounds.
-// - `drb_vbap_error_invalid_speaker_steps`: The speaker steps are invalid.
-// - `drb_vbap_error_invalid_speaker_count`: The speaker count is out of bounds.
+// - `drb_vbap_error_invalid_layout`: The layout is invalid.
 //
 enum
 {
     drb_vbap_error_null_pointer = 1,
     drb_vbap_error_misaligned_pointer = 2,
-    drb_vbap_error_invalid_resolution = 3,
-    drb_vbap_error_invalid_speaker_steps = 4,
-    drb_vbap_error_invalid_speaker_count = 5
+    drb_vbap_error_invalid_layout = 3
 };
 
 //
@@ -85,11 +78,11 @@ enum
 //
 // - `error`: The error code to convert.
 //
-// Returns a pointer to a null-terminated string describing the error.
-// For unrecognized codes, "unknown error" is returned. The string has static
-// storage duration and must not be modified or freed. Never returns null.
+// Returns a pointer to a null-terminated string describing the error. For
+// unrecognized codes, "unknown" is returned. The string has static storage
+// duration and must not be modified or freed. Never returns null.
 //
-// This function is thread-safe and does not allocate.
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API char const * drb_vbap_error_string
     (
@@ -107,7 +100,7 @@ DRB_VBAP_API char const * drb_vbap_error_string
 #define DRB_VBAP_MAX_SPEAKER_COUNT 256
 
 //
-// Minimum and maximum spans in degrees.
+// Minimum and maximum span between two speakers in degrees.
 //
 #define DRB_VBAP_MIN_SPAN 5
 #define DRB_VBAP_MAX_SPAN 175
@@ -115,77 +108,113 @@ DRB_VBAP_API char const * drb_vbap_error_string
 //
 // Struct describing the speaker layout used for constructing the VBAP instance.
 //
+// The library uses a 2D Cartesian coordinate system, with the listener sitting
+// at the origin looking towards +x, and with +y and -y pointing towards the
+// left and right directions, respectively.
+//
 // The `resolution` property divides the unit circle into evenly spaced angular
-// grid steps. Step 0 corresponds to 90° (x = 0, y = 1). Steps increase
+// grid steps. Step 0 corresponds to 0° (x = 1, y = 0). Steps increase
 // counter-clockwise in sizes of 360°/`resolution`. Speaker positions index into
 // this grid using integer indices (steps). All speaker indices must be within
-// [0, `resolution` - 1], unique, and sorted in strict ascending numeric order.
+// [0, `resolution` - 1], unique, and sorted in strict ascending order.
 //
 // Use the following formula to convert a step to an angle:
 //
-//     θ(`step`) = `step` / `resolution` × 360° + 90°.
+//            `step`
+//     θ = ------------ × 360°.
+//         `resolution`
 //
 // For example, for a resolution of 8 and the speaker array [1, 3, 5, 7], the
-// speakers will be positioned at the following angles (135°, 225°, 315°, 45°):
+// speakers will be positioned at 45°, 135°, 225°, and 315° angles:
 //
-//      spk. 1     |     spk. 4
+//                 y
+//
+//     2nd spk.    ^     1st spk.
 //         \       |       /
 //           \     |     /
 //             \   |   /
 //               \ | /
-//    ------------ * ------------
+//    ------------ * -----------> x (front)
 //               / | \
 //             /   |   \
 //           /     |     \
 //         /       |       \
-//      spk. 2     |     spk. 3
-//
-// Note that index 7 maps to 45°, which appears after 315° due to the
-// 360° wrap-around of the angle mapping; the input still uses ascending step
-// order, not geometric (circular) order.
+//     3rd spk.    |     4th spk.
 //
 // Members:
 //
-// - `resolution`: Number of angular divisions in the panning grid.
-// - `speaker_steps`: Pointer to array of speakes.
-// - `sectors`: Pointer to array of sectors.
-// - `count`: Number of speakers/spans in the layout.
+// - `resolution`: Number of steps in the panning grid.
+// - `speaker_steps`: Pointer to an array of speaker steps.
+// - `speaker_count`: Number of speakers in the layout.
 //
-// Checked preconditions (causes failure on violation):
+// Required conditions for a layout to be valid:
 //
-// - 1 <= `resolution` <= `DRB_VBAP_MAXIMUM_RESOLUTION`.
-// - All `speaker_steps` are in-range, unique, and sorted in ascending order.
-// - For all `speakers->divergence`, `0.0` <= `divergence` <= `1.0`.
-// - 1 <= `count` <= `DRB_VBAP_MAXIMUM_SPEAKER_COUNT`.
-//
-// Assumed preconditions (not validated):
-//
-// - `speaker_steps` contains at least `count` speakers.
-// - `sectors` contains at least `count` sectors.
+// - `resolution` is positive and bounded by `DRB_VBAP_MAX_RESOLUTION`.
+// - All speaker steps are in-range, unique, and sorted in ascending order.
+// - The span between any adjacent speakers is within the min/max span limit.
+// - `speaker_count` is positive and bounded by `DRB_VBAP_MAX_SPEAKER_COUNT`.
+// - `speaker_steps` contains at least `speaker_count` speakers. (Not checked.)
 //
 typedef struct
 {
     int32_t resolution;
     int32_t const * speaker_steps;
-    int32_t count;
+    int32_t speaker_count;
 }
 DrB_VBAP_Layout;
 
 //
-// TODO: write description.
+// Returns a pointer to a built-in speaker layout described by `tag`.
 //
-#define DRB_VBAP_LAYOUT_TAG_SURROUND_2 "surround-2" // L/R
-#define DRB_VBAP_LAYOUT_TAG_SURROUND_3 "surround-3" // L/C/R
-#define DRB_VBAP_LAYOUT_TAG_SURROUND_5 "surround-5" // L/C/R/Ls/Rs
-#define DRB_VBAP_LAYOUT_TAG_SURROUND_7 "surround-7" // L/C/R/Ls/Rs/Lb/Rb
-
+// The returned `DrB_VBAP_Layout` and its `speaker_steps` array have static
+// storage duration. They must not be modified or freed by the caller. The
+// pointer remains valid for the lifetime of the process.
 //
-// TODO: write description.
+// Recognised tags are the `DRB_VBAP_LAYOUT_TAG_*` constants below. Tags are
+// case-sensitive. If `tag` is null or not recognised, this function returns
+// null.
+//
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API DrB_VBAP_Layout const * drb_vbap_builtin_layout
     (
         char const * const tag
     );
+
+//
+// Built-in layout tags accepted by `drb_vbap_builtin_layout`:
+//
+// - "surround-3": L / B / R.
+// - "surround-5": L / C / R / Ls / Rs.
+// - "surround-7": L / C / R / Ls / Rs / Lb / Rb.
+// - "quadrophonic": 4 speakers equally spaced at ±45° and ±135°.
+// - "hexagonal": 6 speakers equally spaced at 0°, ±60°, ±120°, and 180°.
+// - "octophonic": 8 speakers equally spaced at 0°, ±45°, ±90°, ±135°, and 180°.
+//
+// The surround layouts use conventional loudspeaker names and angles:
+//
+// - `L`: Left speaker, positioned at +30°.
+// - `R`: Right speaker, positioned at -30°.
+// - `C`: Centre speaker, positioned at 0°.
+// - `B`: Back speaker, positioned at 180°.
+// - `Ls`: Left surround speaker, positioned at +110°.
+// - `Rs`: Right surround speaker, positioned at -110°.
+// - `Lb`: Left back speaker, positioned at +150°.
+// - `Rb`: Right back speaker, positioned at -150°.
+//
+// Angles are in degrees, 0° points to +x, and counter-clockwise is positive.
+//
+// The 5‑channel angles follow ITU‑R BS.775‑3 where applicable. 7.1 layouts are
+// not explicitly defined in BS.775, but the rear loudspeaker angles follow
+// common industry practice (e.g., Dolby/CEDIA/CTA guidance). The LFE/Subwoofer
+// channel is not included as VBAP operates only on programme channels.
+//
+#define DRB_VBAP_LAYOUT_TAG_SURROUND_3 "surround-3"
+#define DRB_VBAP_LAYOUT_TAG_SURROUND_5 "surround-5"
+#define DRB_VBAP_LAYOUT_TAG_SURROUND_7 "surround-7"
+#define DRB_VBAP_LAYOUT_TAG_QUADROPHONIC "quadrophonic"
+#define DRB_VBAP_LAYOUT_TAG_HEXAGONAL "hexagonal"
+#define DRB_VBAP_LAYOUT_TAG_OCTOPHONIC "octophonic"
 
 //
 // Opaque structure representing a VBAP instance.
@@ -201,7 +230,7 @@ typedef struct DrB_VBAP DrB_VBAP;
 // you use custom allocators. On modern platforms, `malloc` and `new` satisfy
 // this alignment requirement.
 //
-// This function is thread-safe and does not allocate.
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API size_t drb_vbap_alignment
     (
@@ -215,13 +244,13 @@ DRB_VBAP_API size_t drb_vbap_alignment
 //
 // - `layout`: Pointer to the layout used for constructing the VBAP instance.
 //
-// Returns the required memory size in bytes, or `0` if the layout is invalid.
+// Returns the required memory size in bytes, or 0 if the layout is invalid.
 //
 // Checked preconditions (causes failure on violation):
 //
 // - `layout` points to a valid speaker layout.
 //
-// This function is thread-safe and does not allocate.
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API size_t drb_vbap_size
     (
@@ -246,11 +275,12 @@ DRB_VBAP_API size_t drb_vbap_size
 //
 // Checked preconditions (causes failure on violation):
 //
-// - `memory` and `layout` are non-null.
-// - `memory` is aligned to `max_align_t`.
-// - `layout` is a valid speaker layout.
+// - `memory` is non-null and aligned to `max_align_t`.
+// - `layout` points to a valid speaker layout.
 //
-// This function is thread-safe and does not allocate.
+// Space complexity: `O(source_count × speaker_count)`.
+//
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
     (
@@ -263,7 +293,7 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
 // Computes the per-speaker gains for a list of source positions.
 //
 // Source positions are treated as directions; the radial magnitude does not
-// affect panning. Behavior is undefined for the zero vector (0,0) or non-finite
+// affect panning. Behaviour is undefined for the zero vector or non-finite
 // values; the implementation does not check for these conditions. Callers
 // should guard against these cases at the call site in real-time contexts.
 //
@@ -289,22 +319,23 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
 // - `vbap`: Pointer to a VBAP instance.
 // - `source_positions`: Interleaved array of x/y coordinates for the sources.
 // - `source_count`: Number of sources.
-// - `gains`: Output array to receive the computed gains.
+// - `speaker_gains`: Output array to receive the computed gains.
 //
-// Assumed preconditions (not validated, violation causes undefined behaviour):
+// Assumed preconditions (not checked; violation causes undefined behaviour):
 //
-// - `vbap`, `source_positions`, and `gains` are non-null.
-// - `source_positions` has space for at least `source_count` × 2 floats.
-// - `gains` has space for at least `source_count` × `speaker_count` floats.
-// - 0 <= `source_count`. (`source_count` == 0 is a no-op.)
-// - `source_positions` and `gains` do not overlap in memory.
+// - All pointers are non-null, distinct, and do not overlap in memory.
+// - `source_positions` has space for `source_count` × 2 floats.
+// - `speaker_gains` has space for `source_count` × `speaker_count` floats.
+// - `source_count` is nonnegative.
+//
+// Postconditions (guaranteed when the preconditions are met):
+//
+// - For each computed gain, g: 0 ≤ g ≤ 1 for all finite inputs.
+// - For each computed gain row, g_1 ... g_n: g_1² + ... + g_n² = 1 ± ε.
 //
 // Time complexity: O(`source_count`).
 //
-// This function is safe to call from a real-time audio thread (no internal
-// allocations or locks). It is fully re-entrant and may be called concurrently
-// from multiple threads on the same instance, as long as the `gains` arrays
-// passed to the function are disjoint.
+// Thread-safe, real-time-safe, and no dynamic allocations.
 //
 DRB_VBAP_API void drb_vbap_process
     (

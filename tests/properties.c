@@ -13,75 +13,69 @@ static double const sqrt_half = 0.7071067811865476;
 static DrB_VBAP_Layout const layouts [] =
 {
     {
-        // Stereo: 30°, 330°.
-        .resolution = 36,
-        .speaker_steps = (int32_t[]){ 3, 33 },
-        .count = 2
-    },
-    {
-        // LCR: 0°, 30°, 330°.
-        .resolution = 36,
-        .speaker_steps = (int32_t[]){ 0, 3, 33 },
-        .count = 3
+        // LBR: 30°, 180°, 330°.
+        .resolution = 12,
+        .speaker_steps = (int32_t[]){ 1, 6, 11 },
+        .speaker_count = 3
     },
     {
         // 5.1 (no LFS): 0°, 30°, 110°, 250°, 330°.
         .resolution = 36,
         .speaker_steps = (int32_t[]){ 0, 3, 11, 25, 33 },
-        .count = 5
+        .speaker_count = 5
     },
     {   // 7.1 (no LFS): 0°, 30°, 90°, 150°, 210°, 270°, 330°.
         .resolution = 36,
         .speaker_steps = (int32_t[]){ 0, 3, 9, 15, 21, 27, 33 },
-        .count = 7
+        .speaker_count = 7
     },
     {
         // Every 120°.
         .resolution = 12,
         .speaker_steps = (int32_t[]){ 0, 4, 8 },
-        .count = 3
+        .speaker_count = 3
     },
     {
         // Every 90°.
         .resolution = 16,
         .speaker_steps = (int32_t[]){ 0, 4, 8, 12 },
-        .count = 4
+        .speaker_count = 4
     },
     {
         // Every 60°.
         .resolution = 36,
         .speaker_steps = (int32_t[]){ 0, 6, 12, 18, 24, 30 },
-        .count = 6
+        .speaker_count = 6
     },
     {
         // Small cluster + spread.
         .resolution = 24,
         .speaker_steps = (int32_t[]){ 0, 1, 2, 10, 12, 18 },
-        .count = 6
+        .speaker_count = 6
     },
     {
         // Heavy clustering + wrap.
         .resolution = 18,
         .speaker_steps = (int32_t[]){ 0, 1, 7, 8, 9, 10, 16, 17 },
-        .count = 8
+        .speaker_count = 8
     },
     {
         // Adjacent pairs per quadrant.
         .resolution = 32,
         .speaker_steps = (int32_t[]){ 0, 1, 8, 9, 16, 17, 24, 25 },
-        .count = 8
+        .speaker_count = 8
     },
     {
         // Prime with co-prime step sizes
         .resolution = 37,
         .speaker_steps = (int32_t[]){ 0, 5, 10, 15, 20, 25, 30, 35 },
-        .count = 8
+        .speaker_count = 8
     },
     {
         // High-res “real degrees” style.
         .resolution = 360,
         .speaker_steps = (int32_t[]){ 0, 60, 120, 180, 240, 300 },
-        .count = 6
+        .speaker_count = 6
     }
 };
 
@@ -293,7 +287,7 @@ extern int main (void)
             vbap,
             layouts[index].resolution,
             layouts[index].speaker_steps,
-            layouts[index].count
+            layouts[index].speaker_count
         );
 
         check_midpoint_equal_power
@@ -301,7 +295,7 @@ extern int main (void)
             vbap,
             layouts[index].resolution,
             layouts[index].speaker_steps,
-            layouts[index].count
+            layouts[index].speaker_count
         );
 
         check_midpoint_equal_power_wrap
@@ -309,7 +303,7 @@ extern int main (void)
             vbap,
             layouts[index].resolution,
             layouts[index].speaker_steps,
-            layouts[index].count
+            layouts[index].speaker_count
         );
 
         check_excact_speaker_hit
@@ -317,7 +311,7 @@ extern int main (void)
             vbap,
             layouts[index].resolution,
             layouts[index].speaker_steps,
-            layouts[index].count
+            layouts[index].speaker_count
         );
 
         free(memory);
