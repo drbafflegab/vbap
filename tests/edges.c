@@ -41,7 +41,6 @@ static void test_construct_null_error_parameter (void)
 
     CHECK(memory != NULL);
 
-    // Pass NULL for error parameter
     DrB_VBAP const * const vbap = drb_vbap_construct(memory, &layout, NULL);
 
     CHECK(vbap != NULL);
@@ -71,7 +70,8 @@ static void test_gain_matrix_zero_sources (void)
     float const source_positions [2] = { 0.0f, 0.0f };
     float gains [4];
 
-    // Call with 0 sources - should not crash
+    // Call with 0 sources - should not crash.
+
     drb_vbap_gain_matrix(vbap, source_positions, gains, 0);
 
     free(memory);
