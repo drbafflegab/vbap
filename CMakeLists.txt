@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 project(drb_vbap VERSION 0.1.0 LANGUAGES C)
 
+option(DRB_ENABLE_SANITIZERS "Enable ASan/UBSan for non-MSVC builds" ON)
+
 function(drb_set_target_options TARGET)
   set_target_properties(${TARGET} PROPERTIES
     C_STANDARD 17
@@ -15,19 +17,28 @@ function(drb_set_target_options TARGET)
       /W4
       /permissive-
     )
+    if (DRB_ENABLE_SANITIZERS)
+      target_compile_options(${TARGET} PRIVATE
+        /fsanitize=address
+      )
+    endif()
   else()
     target_compile_options(${TARGET} PRIVATE
       -Wall
       -Wextra
       -Wpedantic
-      -fsanitize=address,undefined
-      -fno-sanitize-recover=undefined
-      -fno-omit-frame-pointer
       -g
     )
-    target_link_options(${TARGET} PRIVATE
-      -fsanitize=address,undefined
-    )
+    if (DRB_ENABLE_SANITIZERS)
+      target_compile_options(${TARGET} PRIVATE
+        -fsanitize=address,undefined
+        -fno-sanitize-recover=undefined
+        -fno-omit-frame-pointer
+      )
+      target_link_options(${TARGET} PRIVATE
+        -fsanitize=address,undefined
+      )
+    endif()
   endif()
 endfunction()
 
