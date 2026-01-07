@@ -43,13 +43,31 @@ function(drb_set_target_options TARGET)
 endfunction()
 
 # Library
-add_library(vbap STATIC drb-vbap.c)
-target_include_directories(vbap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-drb_set_target_options(vbap)
+#add_library(vbap STATIC drb-vbap.c)
+#target_include_directories(vbap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#drb_set_target_options(vbap)
+
+function(drb_add_vbap_variant TARGET_NAME)
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs DEFINES)
+  cmake_parse_arguments(DRB "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+  add_library(${TARGET_NAME} STATIC drb-vbap.c)
+  target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
+  drb_set_target_options(${TARGET_NAME})
+
+  if (DRB_DEFINES)
+    target_compile_definitions(${TARGET_NAME} PRIVATE ${DRB_DEFINES})
+  endif()
+endfunction()
+
+drb_add_vbap_variant(vbap_default)
+drb_add_vbap_variant(vbap_cache_line_64 DEFINES DRB_CACHE_LINE_SIZE=64)
 
 # Example
 add_executable(example example.c)
-target_link_libraries(example PRIVATE vbap)
+target_link_libraries(example PRIVATE vbap_default)
 drb_set_target_options(example)
 
 # Tests

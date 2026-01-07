@@ -36,7 +36,7 @@ extern int main (void)
 
         DrB_VBAP_Error error = 0;
 
-        DrB_VBAP const * vbap = drb_vbap_construct(memory, layout, &error);
+        DrB_VBAP const * const vbap = drb_vbap_construct(memory, layout, &error);
 
         CHECK(vbap != NULL);
         CHECK(error == 0);

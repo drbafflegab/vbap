@@ -5,7 +5,7 @@
 // Minimal, dependency-free C17 library for vector base amplitude panning. Com-
 // putes gains for batches of 2D source positions in a Cartesian listener frame.
 // Has optional SSE2/NEON paths chosen at compile time with a scalar fallback.
-// All functions are thread-safe, real-time-safe, and free from dynamic mallocs.
+// All functions are re-entrant, real-time-safe, and free from dynamic mallocs.
 
 #ifndef DRB_VBAP_H
 #define DRB_VBAP_H
@@ -94,13 +94,13 @@ DRB_VBAP_API char const * drb_vbap_error_string
 
 // `DRB_VBAP_MAX_RESOLUTION`:
 //
-// Maximum resolution in a setup.
+// Maximum resolution in a layout.
 
 #define DRB_VBAP_MAX_RESOLUTION 65536
 
 // `DRB_VBAP_MAX_SPEAKER_COUNT`:
 //
-// Maximum speaker count in a setup.
+// Maximum speaker count in a layout.
 
 #define DRB_VBAP_MAX_SPEAKER_COUNT 256
 
@@ -161,6 +161,8 @@ DRB_VBAP_API char const * drb_vbap_error_string
 // - The span between any adjacent speakers is within the min/max span limit.
 // - `speaker_count` is positive and bounded by `DRB_VBAP_MAX_SPEAKER_COUNT`.
 // - `speaker_steps` contains at least `speaker_count` speakers. (Not checked.)
+//
+// Note: "adjacent" includes the wrap-around pair: (last, first).
 
 typedef struct
 {
@@ -263,7 +265,7 @@ DRB_VBAP_API size_t drb_vbap_size
         DrB_VBAP_Layout const * layout
     );
 
-// `drb_vbap_construct(memory, layout, error`):
+// `drb_vbap_construct(memory, layout, error)`:
 //
 // Constructs a new VBAP instance from a memory block.
 //
@@ -285,7 +287,7 @@ DRB_VBAP_API size_t drb_vbap_size
 // - `memory` is non-null and aligned to `max_align_t`.
 // - `layout` points to a valid speaker layout.
 //
-// Space complexity: `O(source_count × speaker_count)`.
+// Space complexity: `O(layout->speaker_count + layout->resolution)`.
 
 DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
     (
@@ -294,7 +296,7 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
         DrB_VBAP_Error * error
     );
 
-// `drb_vbap_gain_matrix(vbap, source_positions, speaker_gains, source_count)`
+// `drb_vbap_gain_matrix(vbap, source_positions, gain_matrix, source_count)`
 //
 // Computes the per-speaker gains for a list of source positions.
 //
@@ -324,13 +326,13 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
 // - `vbap`: Pointer to a VBAP instance.
 // - `source_positions`: Interleaved array of x/y coordinates for the sources.
 // - `source_count`: Number of sources.
-// - `speaker_gains`: Output array to receive the computed gains.
+// - `gain_matrix`: Output array to receive the computed gains.
 //
 // Assumed preconditions (not checked; violation causes undefined behaviour):
 //
 // - All pointers are non-null, distinct, and do not overlap in memory.
 // - `source_positions` has space for `source_count × 2` floats.
-// - `speaker_gains` has space for `source_count × speaker_count` floats.
+// - `gain_matrix` has space for `source_count × speaker_count` floats.
 // - `source_count` is nonnegative.
 //
 // Postconditions (guaranteed when the preconditions are met):

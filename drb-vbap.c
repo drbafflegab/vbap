@@ -347,11 +347,11 @@ extern DrB_VBAP const * drb_vbap_construct
         return NULL;
     }
 
-    unsigned char * pointer = alignup_pointer(memory);
+    unsigned char * ptr = alignup_pointer(memory);
 
-    DrB_VBAP * const vbap = alloc(&pointer, sizeof(DrB_VBAP));
-    Bucket * const buckets = alloc(&pointer, layout->resolution * sizeof(Bucket));
-    Matrix * const matrices = alloc(&pointer, layout->speaker_count * sizeof(Matrix));
+    DrB_VBAP * const vbap = alloc(&ptr, sizeof(DrB_VBAP));
+    Bucket * const buckets = alloc(&ptr, layout->resolution * sizeof(Bucket));
+    Matrix * const matrices = alloc(&ptr, layout->speaker_count * sizeof(Matrix));
 
     for (int_fast32_t step = 0, pair = 0; step < layout->resolution; step++)
     {
