@@ -42,11 +42,6 @@ function(drb_set_target_options TARGET)
   endif()
 endfunction()
 
-# Library
-#add_library(vbap STATIC drb-vbap.c)
-#target_include_directories(vbap PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-#drb_set_target_options(vbap)
-
 function(drb_add_vbap_variant TARGET_NAME)
   set(options)
   set(oneValueArgs)
@@ -62,6 +57,7 @@ function(drb_add_vbap_variant TARGET_NAME)
   endif()
 endfunction()
 
+# Library
 drb_add_vbap_variant(vbap_default)
 drb_add_vbap_variant(vbap_cache_line_64 DEFINES DRB_CACHE_LINE_SIZE=64)
 
