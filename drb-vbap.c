@@ -76,7 +76,7 @@ static inline int_fast32_t angle_to_step
         int_fast32_t const resolution
     )
 {
-    int32_t const step = (int32_t)((angle) * (float)resolution / (2.0f * pi));
+    int32_t const step = (int32_t)floorf(angle * (float)resolution/(2.0f * pi));
 
     return step < 0 ? step + resolution : step;
 }
