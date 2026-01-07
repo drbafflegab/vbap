@@ -8,27 +8,25 @@
 // -------------------------------------------------------------------------- //
 
 // MSVC still doesn't implement `max_align_t` as of 2026.
-#if defined(_MSC_VER)
-#  define DRB_MAX_ALIGN alignof(union { long long ll; void * p; double d; })
-#else
-#  define DRB_MAX_ALIGN alignof(max_align_t)
+#if defined(_MSC_VER) && !defined(max_align_t)
+typedef union { long double ld; long long ll; void * p; double d; } max_align_t;
 #endif
 
 #if defined(DRB_CACHE_LINE_SIZE)
 enum { cache_line_size = DRB_CACHE_LINE_SIZE };
 #else
-enum { cache_line_size = (int)DRB_MAX_ALIGN };
+enum { cache_line_size = (int)alignof(max_align_t) };
 #endif
 
-static_assert((DRB_MAX_ALIGN & (DRB_MAX_ALIGN - 1)) == 0, "");
-static_assert(cache_line_size >= DRB_MAX_ALIGN, "");
+static_assert((alignof(max_align_t) & (alignof(max_align_t) - 1)) == 0, "");
+static_assert(cache_line_size >= alignof(max_align_t), "");
 static_assert((cache_line_size & (cache_line_size - 1)) == 0, "");
-static_assert(cache_line_size % DRB_MAX_ALIGN == 0, "");
+static_assert(cache_line_size % alignof(max_align_t) == 0, "");
 
 // Checks that the alignment of `pointer` >= `DRB_MAX_ALIGN`.
 static inline bool aligned (void const * const pointer)
 {
-    uintptr_t const delta = (-(uintptr_t)pointer) & (DRB_MAX_ALIGN - 1);
+    uintptr_t const delta = (-(uintptr_t)pointer) & (alignof(max_align_t) - 1);
 
     return pointer != NULL && delta == 0;
 }
@@ -304,7 +302,7 @@ extern size_t drb_vbap_alignment
         void
     )
 {
-    return DRB_MAX_ALIGN;
+    return alignof(max_align_t);
 }
 
 extern size_t drb_vbap_size
@@ -314,7 +312,7 @@ extern size_t drb_vbap_size
 {
     if (layout == NULL || !validate_layout(layout, NULL)) { return 0; }
 
-    size_t size = cache_line_size - DRB_MAX_ALIGN; // Padding.
+    size_t size = cache_line_size - alignof(max_align_t); // Padding.
 
     size += alignup_size(sizeof(DrB_VBAP));
     size += alignup_size(sizeof(Bucket) * layout->resolution);
