@@ -57,7 +57,7 @@ static inline void * alloc (unsigned char * * const pointer, size_t const size)
 
 // -------------------------------------------------------------------------- //
 
-static float const pi = 3.1415927f;
+static float const two_pi = 2.0f * 3.1415927f;
 
 // -------------------------------------------------------------------------- //
 
@@ -67,7 +67,7 @@ static inline float step_to_angle
         int_fast32_t const resolution
     )
 {
-    return (float)step * (2.0f * pi) / (float)resolution;
+    return (float)step * two_pi / (float)resolution;
 }
 
 static inline int_fast32_t angle_to_step
@@ -76,7 +76,7 @@ static inline int_fast32_t angle_to_step
         int_fast32_t const resolution
     )
 {
-    int32_t const step = (int32_t)floorf(angle * (float)resolution/(2.0f * pi));
+    int32_t const step = (int32_t)floorf(angle * (float)resolution / two_pi);
 
     return step < 0 ? step + resolution : step;
 }
@@ -168,12 +168,12 @@ static inline bool validate_layout
           -
             step_to_angle(layout->speaker_steps[base[0]], layout->resolution)
           +
-            pi * 2.0f
+            two_pi
           ,
-            pi * 2.0f
+            two_pi
         )
           *
-            360.0f / (2.0f * pi);
+            360.0f / two_pi;
 
         if (span < DRB_VBAP_MIN_SPAN || DRB_VBAP_MAX_SPAN < span)
         {
@@ -263,7 +263,7 @@ static DrB_VBAP_Layout const ring_8 [1] =
 static DrB_VBAP_Layout const ring_12 [1] =
 {
     {
-        .resolution = 8,
+        .resolution = 12,
         .speaker_steps = (int32_t []){ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
         .speaker_count = 12
     }

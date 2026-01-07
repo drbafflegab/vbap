@@ -263,7 +263,7 @@ DRB_VBAP_API size_t drb_vbap_size
         DrB_VBAP_Layout const * layout
     );
 
-// `drb_vbap_size(memory, layout, error`):
+// `drb_vbap_construct(memory, layout, error`):
 //
 // Constructs a new VBAP instance from a memory block.
 //
@@ -294,7 +294,7 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
         DrB_VBAP_Error * error
     );
 
-// `drb_vbap_process(vbap, source_positions, speaker_gains, source_count)`
+// `drb_vbap_gain_matrix(vbap, source_positions, speaker_gains, source_count)`
 //
 // Computes the per-speaker gains for a list of source positions.
 //
@@ -317,8 +317,7 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
 // Gains are linear, non-negative, and—within normal floating-point round-off—
 // the sum of squares across all speakers equals one for any finite, non-zero
 // source vector. If a source aligns exactly with a speaker, that speaker’s gain
-// is one and the others are zero. To avoid performance penalties, any subnormal
-// (denormal) gain values are flushed to zero before they are written.
+// is one and the others are zero.
 //
 // Parameters:
 //
@@ -339,7 +338,7 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
 // - For each computed gain, `g`: `0 ≤ g ≤ 1` for all finite inputs.
 // - For each computed gain row, `g_1 ... g_n: g_1² + ... + g_n² = 1 ± ε`.
 //
-// Time complexity: `O(source_count)`.
+// Time complexity: `O(source_count × speaker_count)`.
 
 DRB_VBAP_API void drb_vbap_gain_matrix
     (

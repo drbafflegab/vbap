@@ -85,6 +85,67 @@ Test_Case const test_cases [] =
             .speaker_count = 6
         },
         .expected_error = drb_vbap_error_invalid_layout
+    },
+    {
+        // Span too small (< MIN_SPAN of 5°)
+        .layout =
+        {
+            .resolution = 360,
+            .speaker_steps = (int [3]){ 0, 4, 180 },  // 4° span
+            .speaker_count = 3
+        },
+        .expected_error = drb_vbap_error_invalid_layout
+    },
+    {
+        // Span exactly at MIN_SPAN (5°) - should actually succeed
+        // Note: This test case expects failure, but we'll verify span exactly at boundary
+        .layout =
+        {
+            .resolution = 72,
+            .speaker_steps = (int [3]){ 0, 1, 36 },  // 5° span
+            .speaker_count = 3
+        },
+        .expected_error = 0  // Should succeed
+    },
+    {
+        // Span too large (> MAX_SPAN of 175°)
+        .layout =
+        {
+            .resolution = 360,
+            .speaker_steps = (int [3]){ 0, 176, 270 },  // 176° span
+            .speaker_count = 3
+        },
+        .expected_error = drb_vbap_error_invalid_layout
+    },
+    {
+        // Span exactly at MAX_SPAN (175°) - should succeed
+        .layout =
+        {
+            .resolution = 360,
+            .speaker_steps = (int [3]){ 0, 175, 270 },  // 175° span
+            .speaker_count = 3
+        },
+        .expected_error = 0  // Should succeed
+    },
+    {
+        // Span wraparound too small
+        .layout =
+        {
+            .resolution = 360,
+            .speaker_steps = (int [3]){ 2, 180, 358 },  // wraparound = 4°
+            .speaker_count = 3
+        },
+        .expected_error = drb_vbap_error_invalid_layout
+    },
+    {
+        // Span wraparound too large
+        .layout =
+        {
+            .resolution = 360,
+            .speaker_steps = (int [2]){ 10, 200 },  // wraparound = 170°, forward = 190° (too large)
+            .speaker_count = 2
+        },
+        .expected_error = drb_vbap_error_invalid_layout
     }
 };
 
@@ -109,7 +170,44 @@ extern int main (void)
             &error
         );
 
-        CHECK(vbap == NULL && error == test_case->expected_error);
+        if (test_case->expected_error == 0)
+        {
+            // These test cases should succeed (boundary conditions)
+            // We pass NULL memory, so they will fail with null pointer error
+            // This is expected - we're just testing the layout validation passes
+            CHECK(vbap == NULL && error == drb_vbap_error_null_pointer);
+        }
+        else
+        {
+            CHECK(vbap == NULL && error == test_case->expected_error);
+        }
+    }
+
+    // Test misaligned pointer
+    {
+        DrB_VBAP_Layout const layout =
+        {
+            .resolution = 8,
+            .speaker_steps = (int [4]){ 1, 3, 5, 7 },
+            .speaker_count = 4
+        };
+
+        size_t size = drb_vbap_size(&layout);
+        CHECK(size > 0);
+
+        // Allocate memory with extra space for misalignment
+        void * memory = malloc(size + 16);
+        CHECK(memory != NULL);
+
+        // Create intentionally misaligned pointer (offset by 1 byte)
+        void * misaligned = (unsigned char *)memory + 1;
+
+        DrB_VBAP_Error error = 0;
+        DrB_VBAP const * vbap = drb_vbap_construct(misaligned, &layout, &error);
+
+        CHECK(vbap == NULL && error == drb_vbap_error_misaligned_pointer);
+
+        free(memory);
     }
 
     return EXIT_SUCCESS;

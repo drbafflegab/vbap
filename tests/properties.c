@@ -72,10 +72,33 @@ static DrB_VBAP_Layout const layouts [] =
         .speaker_count = 8
     },
     {
-        // High-res “real degrees” style.
+        // High-res "real degrees" style.
         .resolution = 360,
         .speaker_steps = (int32_t[]){ 0, 60, 120, 180, 240, 300 },
         .speaker_count = 6
+    },
+    {
+        // Extreme resolution: maximum (65536)
+        .resolution = DRB_VBAP_MAX_RESOLUTION,
+        .speaker_steps = (int32_t[]){ 0, 21845, 43690 },
+        .speaker_count = 3
+    },
+    {
+        // Extreme speaker count: minimum (3)
+        .resolution = 12,
+        .speaker_steps = (int32_t[]){ 0, 4, 8 },
+        .speaker_count = 3
+    },
+    {
+        // Extreme speaker count: large (32 speakers)
+        .resolution = 128,
+        .speaker_steps = (int32_t[]){
+            0, 4, 8, 12, 16, 20, 24, 28,
+            32, 36, 40, 44, 48, 52, 56, 60,
+            64, 68, 72, 76, 80, 84, 88, 92,
+            96, 100, 104, 108, 112, 116, 120, 124
+        },
+        .speaker_count = 32
     }
 };
 
@@ -265,6 +288,50 @@ static void check_excact_speaker_hit
     free(source_positions);
 }
 
+static void check_gain_bounds
+    (
+        DrB_VBAP const * const vbap,
+        int32_t const resolution,
+        int32_t const * const speakers,
+        int32_t const speaker_count
+    )
+{
+    (void)resolution, (void)speakers;
+
+    static float const source_positions [] =
+    {
+        -8.413f, +6.992f,
+        +3.152f, -9.605f,
+        +0.487f, +7.341f,
+        -9.771f, -1.228f,
+        +5.906f, +0.275f,
+        -2.638f, -4.517f
+    };
+
+    static int_fast32_t const source_count = 6;
+
+    float * const gains = malloc(speaker_count * source_count * sizeof(float));
+
+    CHECK(gains != NULL);
+
+    drb_vbap_gain_matrix(vbap, source_positions, gains, source_count);
+
+    for (int_fast32_t source = 0; source < source_count; source++)
+    {
+        for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
+        {
+            int_fast32_t const gain_index = source * speaker_count + speaker;
+            float const gain = gains[gain_index];
+
+            // Verify gain is in [0, 1]
+            CHECK(gain >= 0.0f);
+            CHECK(gain <= 1.0f);
+        }
+    }
+
+    free(gains);
+}
+
 #if defined(DRB_USE_TEST_DRIVER)
 extern int drb_vbap_test_properties (void)
 #else
@@ -310,6 +377,14 @@ extern int main (void)
         );
 
         check_excact_speaker_hit
+        (
+            vbap,
+            layouts[index].resolution,
+            layouts[index].speaker_steps,
+            layouts[index].speaker_count
+        );
+
+        check_gain_bounds
         (
             vbap,
             layouts[index].resolution,

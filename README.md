@@ -31,23 +31,23 @@ Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation o
 
 To integrate the library, copy [`drb-vbap.h`](drb-vbap.h) and [`drb-vbap.c`](drb-vbap.c) into your project and compile them with your C17 toolchain. The header file exposes a few functions:
 
-- `drb_vbap_2d_size(…)`: Returns the number of bytes you must provide to construct a VBAP instance.
-- `drb_vbap_2d_construct(…)`: Initializes a VBAP instance in user-provided memory.
-- `drb_vbap_2d_compute_gains(…)`: Computes per-speaker gains for one or more source angles.
+- `drb_vbap_size(…)`: Returns the number of bytes you must provide to construct a VBAP instance.
+- `drb_vbap_construct(…)`: Initializes a VBAP instance in user-provided memory.
+- `drb_vbap_gain_matrix(…)`: Computes per-speaker gains for batches of 2D source positions.
 
 See [`drb-vbap.h`](drb-vbap.h) for the full API documentation.
 
 ## Example
 
-TODO: Write description of what we do in this example.
+This example demonstrates how to compute VBAP gains for 37 source positions spaced evenly around a circle, using the standard 5.1 surround layout. The output shows each source angle and the corresponding gain (in dB) for each of the five speakers.
 
-1. TODO
+1. Include the VBAP header:
 
     ```c
     #include "drb-vbap.h"
     ```
 
-2. TODO
+2. Allocate arrays for source positions (x, y coordinates) and computed gains:
 
     ```c
     enum { source_count = 36 + 1, speaker_count = 5 };
@@ -56,7 +56,7 @@ TODO: Write description of what we do in this example.
     float speaker_gains [source_count * speaker_count];
     ```
 
-3. TODO
+3. Retrieve the built-in surround-5 layout and allocate memory for the VBAP instance:
 
     ```c
     char const * const tag = DRB_VBAP_LAYOUT_TAG_SURROUND_5;
@@ -66,7 +66,7 @@ TODO: Write description of what we do in this example.
     void * const memory = malloc(drb_vbap_size(layout));
     ```
 
-4. TODO
+4. Construct the VBAP instance with error checking:
 
     ```c
     DrB_VBAP_Error error;
@@ -81,7 +81,7 @@ TODO: Write description of what we do in this example.
     }
     ```
 
-5. TODO
+5. Generate source positions: 37 points evenly distributed around a circle (from -180° to +180°):
 
     ```c
     for (int_fast32_t source = 0; source < source_count; source++)
@@ -93,13 +93,13 @@ TODO: Write description of what we do in this example.
     }
     ```
 
-6. TODO
+6. Compute per-speaker gains for all sources in one batch:
 
     ```c
     drb_vbap_gain_matrix(vbap, source_positions, speaker_gains, source_count);
     ```
 
-7. TODO
+7. Print the results: for each source angle, show the gain (in dB) for each speaker:
 
     ```c
     for (int_fast32_t source = 0; source < source_count; source++)
@@ -119,7 +119,7 @@ TODO: Write description of what we do in this example.
     }
     ```
 
-8. TODO
+8. Clean up:
 
     ```c
     free(memory);
