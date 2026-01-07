@@ -38,21 +38,19 @@ extern int main (void)
         source_positions[source * 2 + 1] = sinf(theta - pi);
     }
 
-    drb_vbap_process(vbap, source_positions, speaker_gains, source_count);
+    drb_vbap_gain_matrix(vbap, source_positions, speaker_gains, source_count);
 
     for (int_fast32_t source = 0; source < source_count; source++)
     {
-        float const theta = (float)source * 360.0f / (float)(source_count-1);
+        float const theta = (float)source * 360.0f / (float)(source_count - 1);
 
-        //printf("%+4.0f°:", theta - 180.0f);
-        printf("%+4.0f", theta - 180.0f);
+        printf("%+4.0f°:", theta - 180.0f);
 
         for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
         {
             int_fast32_t const index = source * speaker_count + speaker;
 
-            //printf(" %+5.1f dB", 20.0f * log10f(speaker_gains[index]));
-            printf(", %+10.5f", fmaxf(-100.0f, 20.0f * log10f(speaker_gains[index])));
+            printf(" %+6.1f dB", 20.0f * log10f(speaker_gains[index]));
         }
 
         printf("\n");

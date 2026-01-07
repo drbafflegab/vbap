@@ -2,13 +2,11 @@
 
 *Polar plot for the surround-5 layout showing per-speaker gain (linear) as a function of source azimuth (degrees).*
 
-# Dr. Bafflegab's Vector Base Amplitude Panner (VBAP)
+# Dr. Bafflegab’s Vector Base Amplitude Panner (VBAP)
 
-[![CI](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml/badge.svg)](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml)
+[![CI](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/drbafflegab/vbap/actions/workflows/ci.yml)
 
 Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation of 2D **Vector Base Amplitude Panning** (VBAP). It spatializes one or more audio sources across an arbitrary loudspeaker ring by computing per‑speaker gains, and is designed for real-time audio use, such as game engines, embedded DSP, and educational projects.
-
-> This library is for multi-speaker panning only. Need two-speaker panning instead? Try my [stereo panner](https://github.com/drbafflegab/stereo-panner).
 
 ## Features
 
@@ -16,7 +14,6 @@ Dr. Bafflegab’s VBAP is a minimalistic, dependency‑free C17 implementation o
 - **Real-time & embed-friendly:** Thread-safe opaque handle; no dynamic allocations; deterministic.
 - **Equal-power panning:** Constant-loudness VBAP panning for arbitrary 2D loudspeaker layouts.
 - **Fast, batched workflow:** One‑time construction; processes many sources in one go with O(1) work per source.
-- **SIMD-accelerated:** Vectorised path on x86/x86-64 (SSE2) and AArch32/AArch64 (NEON); compile-time selection with automatic scalar fallback; no run-time dispatch.
 - **MIT Licence:** Free for commercial, open-source, and academic use.
 
 > Even though the library is targeted for C17, it doesn't rely on fancy features and can be modified to compile on a C99 compiler with minimal effort.
@@ -47,13 +44,19 @@ TODO: Write description of what we do in this example.
 1. TODO
 
     ```c
-    enum { source_count = 73, speaker_count = 5 };
+    #include "drb-vbap.h"
+    ```
+
+2. TODO
+
+    ```c
+    enum { source_count = 36 + 1, speaker_count = 5 };
 
     float source_positions [source_count * 2];
     float speaker_gains [source_count * speaker_count];
     ```
 
-2. TODO
+3. TODO
 
     ```c
     char const * const tag = DRB_VBAP_LAYOUT_TAG_SURROUND_5;
@@ -63,7 +66,7 @@ TODO: Write description of what we do in this example.
     void * const memory = malloc(drb_vbap_size(layout));
     ```
 
-3. TODO
+4. TODO
 
     ```c
     DrB_VBAP_Error error;
@@ -78,30 +81,30 @@ TODO: Write description of what we do in this example.
     }
     ```
 
-4. TODO
+5. TODO
 
     ```c
     for (int_fast32_t source = 0; source < source_count; source++)
     {
-        float const theta = (float)source * two_pi / (float)(source_count - 1);
+        float const theta = (float)source * 2.0f * pi / (float)(source_count-1);
 
-        source_positions[source * 2 + 0] = cosf(theta);
-        source_positions[source * 2 + 1] = sinf(theta);
+        source_positions[source * 2 + 0] = cosf(theta - pi);
+        source_positions[source * 2 + 1] = sinf(theta - pi);
     }
-    ```
-
-5. TODO
-
-    ```c
-    drb_vbap_process(vbap, source_positions, speaker_gains, source_count);
     ```
 
 6. TODO
 
     ```c
+    drb_vbap_gain_matrix(vbap, source_positions, speaker_gains, source_count);
+    ```
+
+7. TODO
+
+    ```c
     for (int_fast32_t source = 0; source < source_count; source++)
     {
-        float const theta = (float)source * 360.0f / (float)(source_count-1);
+        float const theta = (float)source * 360.0f / (float)(source_count - 1);
 
         printf("%+4.0f°:", theta - 180.0f);
 
@@ -109,14 +112,14 @@ TODO: Write description of what we do in this example.
         {
             int_fast32_t const index = source * speaker_count + speaker;
 
-            printf(" %7.5f", speaker_gains[index]);
+            printf(" %+6.1f dB", 20.0f * log10f(speaker_gains[index]));
         }
 
         printf("\n");
     }
     ```
 
-7. TODO
+8. TODO
 
     ```c
     free(memory);
@@ -147,15 +150,6 @@ You need a [C17](https://en.wikipedia.org/wiki/C17_(C_standard_revision))-capabl
     ```bash
     ctest --test-dir build
     ```
-
-## SIMD Acceleration
-
-The library includes vectorised implementations for the following platforms:
-
-- **x86/x86-64 (SSE2):** On 32-bit x86, enable SSE2 in your compiler flags (e.g., GCC/Clang: `-msse2`; MSVC: `/arch:SSE2`) to use the vectorised path. On 64-bit x86, SSE2 is baseline and enabled by default.
-- **AArch32/AArch64 (NEON):** On 32-bit ARM, NEON is used when requested in the target flags (e.g., `-mfpu=neon`). On 64-bit ARM, NEON is baseline and enabled by default.
-
-SIMD selection is done at compile time based on the target architecture. If the target lacks these instruction sets, the code automatically falls back to a scalar path. There's no runtime dispatch and no extra dependencies.
 
 ## Used by
 

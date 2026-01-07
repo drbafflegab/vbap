@@ -59,7 +59,7 @@ extern int main (void)
 
     float speaker_gains [source_count * speaker_count];
 
-    drb_vbap_process(vbap, source_positions, speaker_gains, source_count);
+    drb_vbap_gain_matrix(vbap, source_positions, speaker_gains, source_count);
 
     free(memory);
 

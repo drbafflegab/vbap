@@ -1,7 +1,6 @@
 #include "drb-vbap.h"
 
 #include <assert.h>
-#include <float.h>
 #include <math.h>
 #include <stdalign.h>
 #include <string.h>
@@ -109,6 +108,79 @@ static inline void unpack_pair
     base[1] = pair;
 }
 
+static inline bool validate_layout
+    (
+        DrB_VBAP_Layout const * const layout,
+        DrB_VBAP_Error * const error
+    )
+{
+    if (layout->resolution < 1 || DRB_VBAP_MAX_RESOLUTION < layout->resolution)
+    {
+        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
+
+        return false;
+    }
+
+    if (layout->speaker_count < 3 || DRB_VBAP_MAX_SPEAKER_COUNT < layout->speaker_count)
+    {
+        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
+
+        return false;
+    }
+
+    if (layout->speaker_steps == NULL)
+    {
+        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
+
+        return false;
+    }
+
+    int_fast32_t previous_step = -1;
+
+    for (int_fast32_t speaker = 0; speaker < layout->speaker_count; speaker++)
+    {
+        int_fast32_t const step = layout->speaker_steps[speaker];
+
+        if (step <= previous_step || step >= layout->resolution)
+        {
+            if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
+
+            return false;
+        }
+
+        previous_step = step;
+    }
+
+    for (int_fast32_t pair = 0; pair < layout->speaker_count; pair++)
+    {
+        int32_t base [2];
+
+        unpack_pair(pair, layout->speaker_count, base);
+
+        float const span = fmodf
+        (
+            step_to_angle(layout->speaker_steps[base[1]], layout->resolution)
+          -
+            step_to_angle(layout->speaker_steps[base[0]], layout->resolution)
+          +
+            pi * 2.0f
+          ,
+            pi * 2.0f
+        )
+          *
+            360.0f / (2.0f * pi);
+
+        if (span < DRB_VBAP_MIN_SPAN || DRB_VBAP_MAX_SPAN < span)
+        {
+            if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
+
+            return false;
+        }
+    }
+
+    return true;
+}
+
 // -------------------------------------------------------------------------- //
 
 extern void drb_vbap_version
@@ -138,15 +210,6 @@ extern char const * drb_vbap_error_string
     return "unknown";
 }
 
-static DrB_VBAP_Layout const surround_3 [1] =
-{
-    {
-        .resolution = 36,
-        .speaker_steps = (int32_t []){ 3, 18, 33 },
-        .speaker_count = 3
-    }
-};
-
 static DrB_VBAP_Layout const surround_5 [1] =
 {
     {
@@ -165,7 +228,7 @@ static DrB_VBAP_Layout const surround_7 [1] =
     }
 };
 
-static DrB_VBAP_Layout const quadrophonic [1] =
+static DrB_VBAP_Layout const ring_4 [1] =
 {
     {
         .resolution = 8,
@@ -174,7 +237,7 @@ static DrB_VBAP_Layout const quadrophonic [1] =
     }
 };
 
-static DrB_VBAP_Layout const hexagonal [1] =
+static DrB_VBAP_Layout const ring_6 [1] =
 {
     {
         .resolution = 6,
@@ -183,12 +246,21 @@ static DrB_VBAP_Layout const hexagonal [1] =
     }
 };
 
-static DrB_VBAP_Layout const octophonic [1] =
+static DrB_VBAP_Layout const ring_8 [1] =
 {
     {
         .resolution = 8,
         .speaker_steps = (int32_t []){ 0, 1, 2, 3, 4, 5, 6, 7 },
         .speaker_count = 8
+    }
+};
+
+static DrB_VBAP_Layout const ring_12 [1] =
+{
+    {
+        .resolution = 8,
+        .speaker_steps = (int32_t []){ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
+        .speaker_count = 12
     }
 };
 
@@ -199,12 +271,12 @@ extern DrB_VBAP_Layout const * drb_vbap_builtin_layout
 {
     if (tag == NULL) { return NULL; }
 
-    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_3) == 0) { return surround_3; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_5) == 0) { return surround_5; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_7) == 0) { return surround_7; }
-    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_QUADROPHONIC) == 0) { return quadrophonic; }
-    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_HEXAGONAL) == 0) { return hexagonal; }
-    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_OCTOPHONIC) == 0) { return octophonic; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_QUADROPHONIC) == 0) { return ring_4; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_HEXAPHONIC) == 0) { return ring_6; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_OCTOPHONIC) == 0) { return ring_8; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_DODECAPHONIC) == 0) { return ring_12; }
 
     return NULL;
 }
@@ -233,15 +305,7 @@ extern size_t drb_vbap_size
         DrB_VBAP_Layout const * const layout
     )
 {
-    if (1 > layout->resolution || layout->resolution > DRB_VBAP_MAX_RESOLUTION)
-    {
-        return 0;
-    }
-
-    if (2 > layout->speaker_count || layout->speaker_count > DRB_VBAP_MAX_SPEAKER_COUNT)
-    {
-        return 0;
-    }
+    if (layout == NULL || !validate_layout(layout, NULL)) { return 0; }
 
     size_t size = cache_line_size - alignof(max_align_t);
 
@@ -259,21 +323,7 @@ extern DrB_VBAP const * drb_vbap_construct
         DrB_VBAP_Error * const error
     )
 {
-    if (1 > layout->resolution || layout->resolution > DRB_VBAP_MAX_RESOLUTION)
-    {
-        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
-
-        return NULL;
-    }
-
-    if (1 > layout->speaker_count || layout->speaker_count > DRB_VBAP_MAX_SPEAKER_COUNT)
-    {
-        if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
-
-        return NULL;
-    }
-
-    if (memory == NULL || layout->speaker_steps == NULL)
+    if (memory == NULL || layout == NULL)
     {
         if (error != NULL) { *error = drb_vbap_error_null_pointer; }
 
@@ -287,50 +337,9 @@ extern DrB_VBAP const * drb_vbap_construct
         return NULL;
     }
 
-    int_fast32_t previous_step = -1;
-
-    for (int_fast32_t speaker = 0; speaker < layout->speaker_count; speaker++)
+    if (!validate_layout(layout, error))
     {
-        int_fast32_t const step = layout->speaker_steps[speaker];
-
-        if (step <= previous_step || step >= layout->resolution)
-        {
-            if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
-
-            return NULL;
-        }
-
-        previous_step = step;
-    }
-
-    for (int_fast32_t pair = 0; pair < layout->speaker_count; pair++)
-    {
-        int32_t base [2];
-
-        unpack_pair(pair, layout->speaker_count, base);
-
-        float const span = fmodf
-        (
-            step_to_angle(layout->speaker_steps[base[1]], layout->resolution)
-          -
-            step_to_angle(layout->speaker_steps[base[0]], layout->resolution)
-          +
-            pi * 2.0f
-          ,
-            pi * 2.0f
-        )
-          *
-            360.0f / (2.0f * pi);
-
-        float const a = step_to_angle(layout->speaker_steps[base[0]], layout->resolution);
-        float const b = step_to_angle(layout->speaker_steps[base[1]], layout->resolution);
-
-        if (span < DRB_VBAP_MIN_SPAN || DRB_VBAP_MAX_SPAN < span)
-        {
-            if (error != NULL) { *error = drb_vbap_error_invalid_layout; }
-
-            return NULL;
-        }
+        return NULL;
     }
 
     unsigned char * pointer = alignup_pointer(memory);
@@ -389,19 +398,19 @@ extern DrB_VBAP const * drb_vbap_construct
     return vbap;
 }
 
-extern void drb_vbap_process
+extern void drb_vbap_gain_matrix
     (
         DrB_VBAP const * const vbap,
         float const * restrict const source_positions,
-        float * restrict const speaker_gains,
+        float * restrict const gain_matrix,
         int32_t const source_count
     )
 {
+    memset(gain_matrix, 0, source_count * vbap->speaker_count * sizeof(float));
+
     for (int_fast32_t source = 0; source < source_count; source++)
     {
-        float * const row = speaker_gains + source * vbap->speaker_count;
-
-        memset(row, 0, vbap->speaker_count * sizeof(float));
+        float * const row = gain_matrix + source * vbap->speaker_count;
 
         float const source_x = source_positions[source * 2 + 0];
         float const source_y = source_positions[source * 2 + 1];

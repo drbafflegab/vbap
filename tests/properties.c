@@ -107,7 +107,7 @@ static void check_unit_power
 
     CHECK(gains != NULL);
 
-    drb_vbap_process(vbap, source_positions, gains, source_count);
+    drb_vbap_gain_matrix(vbap, source_positions, gains, source_count);
 
     for (int_fast32_t source = 0; source < source_count; source++)
     {
@@ -155,7 +155,7 @@ static void check_midpoint_equal_power
         source_positions[source * 2 + 1] = (float)sin(angle);
     }
 
-    drb_vbap_process(vbap, source_positions, gains, source_count);
+    drb_vbap_gain_matrix(vbap, source_positions, gains, source_count);
 
     for (int_fast32_t source = 0; source < source_count; source++)
     {
@@ -199,7 +199,7 @@ static void check_midpoint_equal_power_wrap
 
     float const source_positions [2] = { (float)cos(angle), (float)sin(angle) };
 
-    drb_vbap_process(vbap, source_positions, gains, 1);
+    drb_vbap_gain_matrix(vbap, source_positions, gains, 1);
 
     CHECK(fabs((double)fabsf(gains[speaker_count - 1]) - sqrt_half) < epsilon);
     CHECK(fabs((double)fabsf(gains[0]) - sqrt_half) < epsilon);
@@ -240,7 +240,7 @@ static void check_excact_speaker_hit
         source_positions[source * 2 + 1] = (float)sin(angle);
     }
 
-    drb_vbap_process(vbap, source_positions, gains, source_count);
+    drb_vbap_gain_matrix(vbap, source_positions, gains, source_count);
 
     for (int_fast32_t source = 0; source < source_count; source++)
     {

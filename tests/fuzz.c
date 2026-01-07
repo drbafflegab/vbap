@@ -45,23 +45,6 @@ static void test_iteration (void)
 
     CHECK(speaker_angles != NULL);
 
-    DrB_VBAP_Layout const layout =
-    {
-        .resolution = resolution,
-        .speaker_steps = speaker_angles,
-        .speaker_count = speaker_count
-    };
-
-    void * const memory = malloc(drb_vbap_size(&layout));
-    float * const source_positions = malloc(sizeof(float) * 2 * source_count);
-    float * const speaker_gains_0 = malloc(sizeof(float) * total_gains_count);
-    float * const speaker_gains_1 = malloc(sizeof(float) * total_gains_count);
-
-    CHECK(memory != NULL);
-    CHECK(source_positions != NULL);
-    CHECK(speaker_gains_0 != NULL);
-    CHECK(speaker_gains_1 != NULL);
-
     for (int_fast32_t speaker = 0; speaker < speaker_count; speaker++)
     {
         speaker_angles[speaker] = (speaker * resolution) / speaker_count;
@@ -75,6 +58,25 @@ static void test_iteration (void)
         speaker_angles[speaker] %= resolution;
     }
 
+    DrB_VBAP_Layout const layout =
+    {
+        .resolution = resolution,
+        .speaker_steps = speaker_angles,
+        .speaker_count = speaker_count
+    };
+
+    size_t const vbap_size = drb_vbap_size(&layout);
+
+    void * const memory = malloc(vbap_size);
+    float * const source_positions = malloc(sizeof(float) * 2 * source_count);
+    float * const speaker_gains_0 = malloc(sizeof(float) * total_gains_count);
+    float * const speaker_gains_1 = malloc(sizeof(float) * total_gains_count);
+
+    CHECK(memory != NULL);
+    CHECK(source_positions != NULL);
+    CHECK(speaker_gains_0 != NULL);
+    CHECK(speaker_gains_1 != NULL);
+
     DrB_VBAP const * const vbap = drb_vbap_construct(memory, &layout, NULL);
 
     if (vbap != NULL)
@@ -85,8 +87,8 @@ static void test_iteration (void)
             source_positions[source * 2 + 1] = uniform() * 20.0f - 10.0f;
         }
 
-        drb_vbap_process(vbap, source_positions, speaker_gains_0, source_count);
-        drb_vbap_process(vbap, source_positions, speaker_gains_1, source_count);
+        drb_vbap_gain_matrix(vbap, source_positions, speaker_gains_0, source_count);
+        drb_vbap_gain_matrix(vbap, source_positions, speaker_gains_1, source_count);
 
         size_t const size = total_gains_count * sizeof(float);
 
