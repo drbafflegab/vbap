@@ -211,6 +211,8 @@ static void check_midpoint_equal_power_wrap
             CHECK((double)fabsf(gains[other]) < epsilon);
         }
     }
+
+    free(gains);
 }
 
 static void check_excact_speaker_hit
@@ -260,6 +262,7 @@ static void check_excact_speaker_hit
     }
 
     free(gains);
+    free(source_positions);
 }
 
 #if defined(DRB_USE_TEST_DRIVER)
