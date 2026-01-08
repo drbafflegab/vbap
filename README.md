@@ -10,10 +10,11 @@ Dr. Bafflegab’s VBAP is a minimal, dependency‑free C17 implementation of 2D 
 
 ## Features
 
-- **Minimal, portable C17:** One header + one source; cross-platform; no third-party dependencies; C++ compatible.
+- **Tiny & portable:** One header + one source; cross-platform; no third-party dependencies; C++ compatible.
 - **Real-time & embed-friendly:** Thread-safe opaque handle; no dynamic allocations; deterministic.
 - **Equal-power panning:** Constant-loudness VBAP panning for arbitrary 2D loudspeaker layouts.
-- **Fast, batched workflow:** One‑time construction; processes many sources in one go with constant work per source.
+- **Batched API:** One‑time construction; processes many sources in one go with constant work per source.
+- **Robust test suite:** Deterministic fuzzing, property checks, reference-law verification, threshold edge cases, and sanity vectors.
 - **MIT Licence:** Free for commercial, open-source, and academic use.
 
 > Even though the library is targeted for C17, it doesn't rely on advanced features and can be modified to compile on a C99 compiler with minimal effort.
@@ -22,7 +23,7 @@ Dr. Bafflegab’s VBAP is a minimal, dependency‑free C17 implementation of 2D 
 
 *Vector Base Amplitude Panning* (Pulkki, 1997) positions a virtual sound by driving the *nearest two* loudspeakers (in 2D) with gains chosen so the vector sum of the loudspeaker directions points toward the target. Compared to HRTF convolution, VBAP is lightweight and scales to many simultaneous sources while preserving directional cues on loudspeaker setups.
 
-The library uses a 2D Cartesian coordinate system, with the listener sitting at the origin looking towards $`+x`$, and with $`+y`$/$`-y`$ pointing towards the left/right speaker, respectively. Given a 2D source at position $`(x, y)`$, only its direction matters: vectors are internally normalised and their magnitude is ignored (the zero vector $`(0, 0)`$ is invalid).
+The library uses a 2D Cartesian coordinate system, with the listener sitting at the origin looking towards $`+x`$, and with $`+y`$ and $`-y`$ pointing left and right, respectively. Given a 2D source at position $`(x, y)`$, only its direction matters: vectors are internally normalised and their magnitude is ignored (the zero vector $`(0, 0)`$ is invalid).
 
 Azimuth is measured from $`+x`$, with positive angles rotating towards $`+y`$ (anticlockwise): left is $`+90^\circ`$, right is $`-90^\circ`$, and behind is $`\pm180^\circ`$.
 

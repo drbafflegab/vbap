@@ -238,7 +238,7 @@ static void check_midpoint_equal_power_wrap
     free(gains);
 }
 
-static void check_excact_speaker_hit
+static void check_exact_speaker_hit
     (
         DrB_VBAP const * const vbap,
         int32_t const resolution,
@@ -275,12 +275,9 @@ static void check_excact_speaker_hit
 
         for (int_fast32_t other = 0; other < source; other++)
         {
-            if (other != source)
-            {
-                int_fast32_t const other_index = source * speaker_count + other;
+            int_fast32_t const other_index = source * speaker_count + other;
 
-                CHECK((double)fabsf(gains[other_index]) < epsilon);
-            }
+            CHECK((double)fabsf(gains[other_index]) < epsilon);
         }
     }
 
@@ -376,7 +373,7 @@ extern int main (void)
             layouts[index].speaker_count
         );
 
-        check_excact_speaker_hit
+        check_exact_speaker_hit
         (
             vbap,
             layouts[index].resolution,

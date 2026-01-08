@@ -198,7 +198,7 @@ DRB_VBAP_API DrB_VBAP_Layout const * drb_vbap_builtin_layout
 // - "quadrophonic": `4` speakers equally spaced at `±45°`, `±135°`.
 // - "hexagonal": `6` speakers equally spaced at `0°`, `±60°`, `±120°`, `180°`.
 // - "octophonic": `8` speakers equally spaced at 0°, ±45°, ±90°, ±135°, 180°.
-// - "dodecaphonic": `12` speakers equally spaced  at 0°, ±30°, ±60°, ..., 180°.
+// - "dodecaphonic": `12` speakers equally spaced at 0°, ±30°, ±60°, ..., 180°.
 //
 // The surround layouts use conventional loudspeaker names and angles:
 //
@@ -221,7 +221,7 @@ DRB_VBAP_API DrB_VBAP_Layout const * drb_vbap_builtin_layout
 #define DRB_VBAP_LAYOUT_TAG_SURROUND_5 "surround-5"
 #define DRB_VBAP_LAYOUT_TAG_SURROUND_7 "surround-7"
 #define DRB_VBAP_LAYOUT_TAG_QUADROPHONIC "quadrophonic"
-#define DRB_VBAP_LAYOUT_TAG_HEXAPHONIC "hexaphonic"
+#define DRB_VBAP_LAYOUT_TAG_HEXAGONAL "hexagonal"
 #define DRB_VBAP_LAYOUT_TAG_OCTOPHONIC "octophonic"
 #define DRB_VBAP_LAYOUT_TAG_DODECAPHONIC "dodecaphonic"
 
@@ -325,8 +325,8 @@ DRB_VBAP_API DrB_VBAP const * drb_vbap_construct
 //
 // - `vbap`: Pointer to a VBAP instance.
 // - `source_positions`: Interleaved array of x/y coordinates for the sources.
-// - `source_count`: Number of sources.
 // - `gain_matrix`: Output array to receive the computed gains.
+// - `source_count`: Number of sources.
 //
 // Assumed preconditions (not checked; violation causes undefined behaviour):
 //

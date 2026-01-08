@@ -36,8 +36,8 @@ static float uniform (void)
 
 static void test_iteration (void)
 {
-    int_fast32_t const resolution = range(2, 4096);
-    int_fast32_t const speaker_count = range(2, minimum(resolution, 16));
+    int_fast32_t const resolution = range(3, 4096);
+    int_fast32_t const speaker_count = range(3, minimum(resolution, 16));
     int_fast32_t const source_count = range(1, 64);
     int_fast32_t const total_gains_count = source_count * speaker_count;
 

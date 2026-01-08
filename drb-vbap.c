@@ -7,7 +7,7 @@
 
 // -------------------------------------------------------------------------- //
 
-// MSVC still doesn't implement `max_align_t` as of 2026.
+// Apparently MSVC still doesn't implement `max_align_t` as of 2026.
 #if defined(_MSC_VER) && !defined(max_align_t)
 typedef union { long double ld; long long ll; void * p; double d; } max_align_t;
 #endif
@@ -23,7 +23,7 @@ static_assert(cache_line_size >= alignof(max_align_t), "");
 static_assert((cache_line_size & (cache_line_size - 1)) == 0, "");
 static_assert(cache_line_size % alignof(max_align_t) == 0, "");
 
-// Checks that the alignment of `pointer` >= `DRB_MAX_ALIGN`.
+// Checks that the alignment of `pointer` >= `alignof(max_align_t)`.
 static inline bool aligned (void const * const pointer)
 {
     uintptr_t const delta = (-(uintptr_t)pointer) & (alignof(max_align_t) - 1);
@@ -279,7 +279,7 @@ extern DrB_VBAP_Layout const * drb_vbap_builtin_layout
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_5) == 0) { return surround_5; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_SURROUND_7) == 0) { return surround_7; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_QUADROPHONIC) == 0) { return ring_4; }
-    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_HEXAPHONIC) == 0) { return ring_6; }
+    if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_HEXAGONAL) == 0) { return ring_6; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_OCTOPHONIC) == 0) { return ring_8; }
     if (strcmp(tag, DRB_VBAP_LAYOUT_TAG_DODECAPHONIC) == 0) { return ring_12; }
 
@@ -312,7 +312,8 @@ extern size_t drb_vbap_size
 {
     if (layout == NULL || !validate_layout(layout, NULL)) { return 0; }
 
-    size_t size = cache_line_size - alignof(max_align_t); // Padding.
+    // Reserve space for worst-case alignment padding to next cache line.
+    size_t size = cache_line_size - alignof(max_align_t);
 
     size += alignup_size(sizeof(DrB_VBAP));
     size += alignup_size(sizeof(Bucket) * layout->resolution);
@@ -347,11 +348,11 @@ extern DrB_VBAP const * drb_vbap_construct
         return NULL;
     }
 
-    unsigned char * ptr = alignup_pointer(memory);
+    unsigned char * pointer = alignup_pointer(memory);
 
-    DrB_VBAP * const vbap = alloc(&ptr, sizeof(DrB_VBAP));
-    Bucket * const buckets = alloc(&ptr, layout->resolution * sizeof(Bucket));
-    Matrix * const matrices = alloc(&ptr, layout->speaker_count * sizeof(Matrix));
+    DrB_VBAP * const vbap = alloc(&pointer, sizeof(DrB_VBAP));
+    Bucket * const buckets = alloc(&pointer, layout->resolution * sizeof(Bucket));
+    Matrix * const matrices = alloc(&pointer, layout->speaker_count * sizeof(Matrix));
 
     for (int_fast32_t step = 0, pair = 0; step < layout->resolution; step++)
     {
