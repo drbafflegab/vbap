@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+    paths-ignore: [ '**.md' ]
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+    paths-ignore: [ '**.md' ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            cc: gcc
+          - os: macos-latest
+            cc: clang
+          - os: windows-latest
+            cc: cl
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSVC dev cmd
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure (all)
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        env:
+          CC: ${{ matrix.cc }}
+
+      - name: Build (all)
+        run: cmake --build build
+
+      - name: Test (all)
+        run: ctest --test-dir build --output-on-failure
